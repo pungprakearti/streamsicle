@@ -34,4 +34,4 @@ Open [http://localhost:3000](http://localhost:3000).
 
 ## Version
 
-v0.0.12
+v0.0.13

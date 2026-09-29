@@ -20,7 +20,7 @@ Local-only Next.js streaming ledger. Multi-profile family watchlist app.
 
 ## Current version
 
-v0.0.12
+v0.0.13
 
 ## Status
 

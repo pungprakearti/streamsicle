@@ -22,7 +22,9 @@ async function main() {
 
   const result = await syncTmdbData(opts);
 
-  console.log(`[${new Date().toISOString()}] Sync complete:`);
+  const mins = Math.floor(Number(result.totalSeconds) / 60);
+  const secs = Math.round(Number(result.totalSeconds) % 60);
+  console.log(`[${new Date().toISOString()}] Sync complete in ${mins}m ${secs}s:`);
   console.log(`  Synced: ${result.synced}`);
   console.log(`  Skipped (unchanged): ${result.skipped}`);
   console.log(`  Total processed: ${result.total}`);

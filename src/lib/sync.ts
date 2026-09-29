@@ -310,6 +310,22 @@ export async function syncTmdbData(options: SyncOptions = {}) {
   let synced = 0;
   let skipped = 0;
   const errors: string[] = [];
+  const syncStart = Date.now();
+  let lastLog = syncStart;
+
+  const ticker = setInterval(() => {
+    const elapsed = ((Date.now() - syncStart) / 1000).toFixed(0);
+    const processed = synced + skipped + errors.length;
+    const pct = allIds.length > 0 ? ((processed / allIds.length) * 100).toFixed(1) : "0";
+    const rate = processed > 0 ? (processed / ((Date.now() - syncStart) / 1000)).toFixed(1) : "0";
+    const remaining = processed > 0
+      ? Math.round((allIds.length - processed) / (processed / ((Date.now() - syncStart) / 1000)))
+      : "?";
+    console.log(
+      `  [${elapsed}s] ${processed}/${allIds.length} (${pct}%) | +${synced} synced, ${skipped} unchanged, ${errors.length} errors | ${rate}/s | ~${remaining}s left`
+    );
+    lastLog = Date.now();
+  }, 10_000);
 
   for (const entry of allIds) {
     try {
@@ -321,15 +337,17 @@ export async function syncTmdbData(options: SyncOptions = {}) {
     } catch (e) {
       errors.push(`${entry.type}/${entry.id}: ${e instanceof Error ? e.message : String(e)}`);
     }
-    if ((synced + skipped) % 100 === 0 && (synced + skipped) > 0) {
-      console.log(`  Progress: ${synced + skipped}/${allIds.length} (${synced} synced, ${skipped} unchanged)`);
-    }
   }
+
+  clearInterval(ticker);
+
+  const totalSeconds = ((Date.now() - syncStart) / 1000).toFixed(1);
 
   return {
     synced,
     skipped,
     errors,
+    totalSeconds,
     total: allIds.length,
     movieCount: movieIds.size,
     tvCount: tvIds.size,
