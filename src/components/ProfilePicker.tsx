@@ -102,7 +102,7 @@ export function ProfilePicker({ profiles: initialProfiles }: Props) {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center gap-8 p-8 text-center">
+    <div className="flex flex-col items-center gap-8 text-center w-full">
       {!isFormOpen ? (
         <>
           <h2 style={{ fontSize: 40, margin: 0 }}>Who&apos;s watching?</h2>
@@ -152,7 +152,7 @@ export function ProfilePicker({ profiles: initialProfiles }: Props) {
                 className="profile-square rounded-xl grid place-items-center"
                 style={{ border: "2px dashed var(--color-neutral-400)", color: "var(--color-neutral-600)" }}
               >
-                <Plus size={56} weight="duotone" />
+                <Plus size={56} weight="duotone" className="profile-plus-icon" />
               </span>
               <span className="profile-label">Add profile</span>
             </button>
