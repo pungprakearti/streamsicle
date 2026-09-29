@@ -12,9 +12,13 @@ export default async function GatePage() {
   const profiles = await getProfiles();
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center gap-8 p-8">
-      <Logo />
-      <ProfilePicker profiles={profiles} />
+    <div className="min-h-screen flex flex-col p-8">
+      <div className="text-center">
+        <Logo />
+      </div>
+      <div className="flex-1 flex flex-col items-center justify-center">
+        <ProfilePicker profiles={profiles} />
+      </div>
     </div>
   );
 }
