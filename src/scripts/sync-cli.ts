@@ -25,7 +25,6 @@ async function main() {
   console.log(`[${new Date().toISOString()}] Sync complete:`);
   console.log(`  Synced: ${result.synced}`);
   console.log(`  Skipped (unchanged): ${result.skipped}`);
-  console.log(`  Skipped (not on any service): ${result.noService}`);
   console.log(`  Total processed: ${result.total}`);
   console.log(`  Discovered: ${result.movieCount} movies, ${result.tvCount} TV shows`);
   if (result.errors.length > 0) {

@@ -1,4 +1,24 @@
+import { createHash } from "crypto";
+
 const BASE = "https://api.themoviedb.org/3";
+const RATE_LIMIT_MAX = 35;
+const RATE_LIMIT_WINDOW_MS = 10_000;
+
+const requestTimestamps: number[] = [];
+
+async function rateLimit(): Promise<void> {
+  const now = Date.now();
+  while (requestTimestamps.length > 0 && requestTimestamps[0] < now - RATE_LIMIT_WINDOW_MS) {
+    requestTimestamps.shift();
+  }
+  if (requestTimestamps.length >= RATE_LIMIT_MAX) {
+    const oldest = requestTimestamps[0];
+    const waitMs = oldest + RATE_LIMIT_WINDOW_MS - now + 50;
+    await new Promise((resolve) => setTimeout(resolve, waitMs));
+    return rateLimit();
+  }
+  requestTimestamps.push(Date.now());
+}
 
 function apiKey() {
   const key = process.env.TMDB_API_KEY;
@@ -9,6 +29,7 @@ function apiKey() {
 }
 
 async function tmdbFetch<T>(path: string, params: Record<string, string> = {}): Promise<T> {
+  await rateLimit();
   const url = new URL(`${BASE}${path}`);
   url.searchParams.set("api_key", apiKey());
   for (const [k, v] of Object.entries(params)) {
@@ -159,6 +180,24 @@ export const tmdb = {
 
   searchMulti: (query: string, page = 1) =>
     tmdbFetch<TmdbSearchResult>("/search/multi", { query, page: String(page) }),
+
+  discoverMovies: (providerId: number, page = 1) =>
+    tmdbFetch<TmdbPageResult<TmdbMovie>>("/discover/movie", {
+      with_watch_providers: String(providerId),
+      watch_region: "US",
+      with_watch_monetization_types: "flatrate",
+      sort_by: "popularity.desc",
+      page: String(page),
+    }),
+
+  discoverTv: (providerId: number, page = 1) =>
+    tmdbFetch<TmdbPageResult<TmdbTvShow>>("/discover/tv", {
+      with_watch_providers: String(providerId),
+      watch_region: "US",
+      with_watch_monetization_types: "flatrate",
+      sort_by: "popularity.desc",
+      page: String(page),
+    }),
 };
 
 const GENRE_MAP: Record<number, string> = {
@@ -172,4 +211,19 @@ const GENRE_MAP: Record<number, string> = {
 
 export function genreIdsToNames(ids: number[]): string[] {
   return ids.map((id) => GENRE_MAP[id] || "Unknown").filter((g) => g !== "Unknown");
+}
+
+export function computeSyncHash(detail: TmdbMovieDetail | TmdbTvDetail, providers: TmdbWatchProviders): string {
+  const title = "title" in detail ? detail.title : detail.name;
+  const payload = JSON.stringify({
+    title,
+    overview: detail.overview,
+    vote_average: detail.vote_average,
+    popularity: detail.popularity,
+    poster_path: detail.poster_path,
+    backdrop_path: detail.backdrop_path,
+    genres: detail.genres.map((g) => g.id).sort(),
+    providers: (providers.results?.US?.flatrate || []).map((p) => p.provider_id).sort(),
+  });
+  return createHash("sha256").update(payload).digest("hex").slice(0, 16);
 }
