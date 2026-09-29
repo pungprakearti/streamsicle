@@ -1,0 +1,198 @@
+@import "tailwindcss";
+
+:root {
+  --color-bg: #141312;
+  --color-surface: #1f1d1c;
+  --color-text: #ecebea;
+  --color-accent: #38a6cf;
+  --color-accent-2: #ff458e;
+  --color-divider: color-mix(in srgb, #ecebea 16%, transparent);
+  --color-neutral-100: #2d2b2b;
+  --color-neutral-200: #444141;
+  --color-neutral-300: #605d5d;
+  --color-neutral-400: #7d7979;
+  --color-neutral-500: #9b9797;
+  --color-neutral-600: #bab6b6;
+  --color-neutral-700: #b8b4b4;
+  --color-neutral-800: #eae7e7;
+  --color-neutral-900: #f8f4f4;
+  --color-accent-100: #0a303e;
+  --color-accent-200: #004961;
+  --color-accent-300: #006786;
+  --color-accent-400: #1186ac;
+  --color-accent-500: #38a6cf;
+  --color-accent-600: #62c5ee;
+  --color-accent-700: #62c5ee;
+  --color-accent-800: #cbeeff;
+  --color-accent-900: #e9f8ff;
+  --color-accent-2-100: #4b1528;
+  --color-accent-2-200: #790e3d;
+  --color-accent-2-300: #aa0b56;
+  --color-accent-2-400: #d82071;
+  --color-accent-2-500: #ff458e;
+  --color-accent-2-600: #ff90b1;
+  --color-accent-2-700: #ff90b1;
+  --color-accent-2-800: #ffdee6;
+  --color-accent-2-900: #fff1f4;
+  --shadow-sm: 0 0 0 1px color-mix(in srgb, #fff 6%, transparent), 0 1px 2px rgba(0,0,0,.5);
+  --shadow-md: 0 0 0 1px color-mix(in srgb, #fff 8%, transparent), 0 4px 14px rgba(0,0,0,.55);
+  --shadow-lg: 0 0 0 1px color-mix(in srgb, #fff 10%, transparent), 0 14px 40px rgba(0,0,0,.65);
+  --radius-md: 8px;
+  --radius-lg: 12px;
+}
+
+@theme inline {
+  --color-bg: var(--color-bg);
+  --color-surface: var(--color-surface);
+  --color-text: var(--color-text);
+  --color-accent: var(--color-accent);
+  --color-accent-2: var(--color-accent-2);
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: system-ui, -apple-system, sans-serif;
+}
+
+a {
+  color: var(--color-accent-700);
+}
+a:hover {
+  color: var(--color-accent);
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border-radius: var(--radius-lg);
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  border: 0;
+  font-family: inherit;
+  transition: background 0.15s, color 0.15s;
+}
+
+.btn-primary {
+  background: var(--color-accent);
+  color: var(--color-bg);
+}
+.btn-primary:hover {
+  background: var(--color-accent-600);
+}
+
+.btn-secondary {
+  background: var(--color-surface);
+  color: var(--color-text);
+  box-shadow: var(--shadow-sm);
+}
+.btn-secondary:hover {
+  background: var(--color-neutral-100);
+}
+
+.btn-ghost {
+  background: none;
+  color: var(--color-text);
+}
+.btn-ghost:hover {
+  color: var(--color-accent);
+}
+
+.input {
+  background: var(--color-surface);
+  color: var(--color-text);
+  border: 1px solid var(--color-divider);
+  border-radius: var(--radius-md);
+  padding: 8px 12px;
+  font-size: 15px;
+  font-family: inherit;
+  outline: none;
+  width: 100%;
+}
+.input:focus {
+  border-color: var(--color-accent);
+}
+
+.seg {
+  display: inline-flex;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+}
+.seg-opt {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  font-size: 14px;
+  cursor: pointer;
+  background: var(--color-surface);
+  color: var(--color-neutral-600);
+  border: none;
+  transition: background 0.15s, color 0.15s;
+}
+.seg-opt:has(input:checked) {
+  background: var(--color-accent-100);
+  color: var(--color-accent-700);
+}
+.seg-opt input {
+  display: none;
+}
+
+.field label {
+  display: block;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-neutral-600);
+  margin-bottom: 4px;
+}
+
+table.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+table.table th {
+  text-align: left;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-neutral-600);
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--color-divider);
+}
+table.table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--color-divider);
+  font-size: 14px;
+  vertical-align: top;
+}
+table.table tbody tr:hover {
+  background: var(--color-surface);
+}
+
+nav.nav {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+nav.nav a {
+  text-decoration: none;
+  color: var(--color-neutral-600);
+  font-size: 16px;
+}
+nav.nav a:hover {
+  color: var(--color-accent);
+}
+nav.nav a[aria-current="page"] {
+  color: var(--color-accent-700);
+  font-weight: 600;
+}

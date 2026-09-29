@@ -1,0 +1,137 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Profile {
+  id        String   @id @default(cuid())
+  name      String
+  avatarId  String   @map("avatar_id")
+  createdAt DateTime @default(now()) @map("created_at")
+  watchlist Watchlist[]
+
+  @@map("profiles")
+}
+
+model Service {
+  id    String @id @default(cuid())
+  slug  String @unique
+  name  String
+  titles TitleService[]
+
+  @@map("services")
+}
+
+model Title {
+  id             String   @id @default(cuid())
+  tmdbId         Int      @unique @map("tmdb_id")
+  title          String
+  type           TitleType
+  logline        String?
+  releaseDate    DateTime? @map("release_date")
+  status         TitleStatus @default(CATALOG)
+  rating         String?
+  runtime        Int?
+  genres         String[]
+  tmdbPopularity Float    @default(0) @map("tmdb_popularity")
+  posterPath     String?  @map("poster_path")
+  backdropPath   String?  @map("backdrop_path")
+  credit         String?
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  services   TitleService[]
+  watchlist  Watchlist[]
+  castMembers CastMember[]
+  crewMembers CrewMember[]
+  seasons    Season[]
+
+  @@map("titles")
+}
+
+model TitleService {
+  titleId   String  @map("title_id")
+  serviceId String  @map("service_id")
+  title     Title   @relation(fields: [titleId], references: [id], onDelete: Cascade)
+  service   Service @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+
+  @@id([titleId, serviceId])
+  @@map("title_services")
+}
+
+model Watchlist {
+  id        String   @id @default(cuid())
+  titleId   String   @map("title_id")
+  profileId String   @map("profile_id")
+  addedAt   DateTime @default(now()) @map("added_at")
+  title     Title    @relation(fields: [titleId], references: [id], onDelete: Cascade)
+  profile   Profile  @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@unique([titleId, profileId])
+  @@map("watchlist")
+}
+
+model CastMember {
+  id        String @id @default(cuid())
+  titleId   String @map("title_id")
+  name      String
+  role      String?
+  photoPath String? @map("photo_path")
+  sortOrder Int    @default(0) @map("sort_order")
+  title     Title  @relation(fields: [titleId], references: [id], onDelete: Cascade)
+
+  @@map("cast_members")
+}
+
+model CrewMember {
+  id         String @id @default(cuid())
+  titleId    String @map("title_id")
+  name       String
+  department String
+  sortOrder  Int    @default(0) @map("sort_order")
+  title      Title  @relation(fields: [titleId], references: [id], onDelete: Cascade)
+
+  @@map("crew_members")
+}
+
+model Season {
+  id           String   @id @default(cuid())
+  titleId      String   @map("title_id")
+  seasonNumber Int      @map("season_number")
+  episodeCount Int?     @map("episode_count")
+  airDate      DateTime? @map("air_date")
+  title        Title    @relation(fields: [titleId], references: [id], onDelete: Cascade)
+  episodes     Episode[]
+
+  @@unique([titleId, seasonNumber])
+  @@map("seasons")
+}
+
+model Episode {
+  id            String   @id @default(cuid())
+  seasonId      String   @map("season_id")
+  episodeNumber Int      @map("episode_number")
+  title         String?
+  overview      String?
+  airDate       DateTime? @map("air_date")
+  runtime       Int?
+  season        Season   @relation(fields: [seasonId], references: [id], onDelete: Cascade)
+
+  @@unique([seasonId, episodeNumber])
+  @@map("episodes")
+}
+
+enum TitleType {
+  FILM
+  SERIES
+}
+
+enum TitleStatus {
+  CATALOG
+  NEW
+  UPCOMING
+}
