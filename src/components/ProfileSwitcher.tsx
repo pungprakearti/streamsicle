@@ -28,7 +28,7 @@ export function ProfileSwitcher({ name, avatarId }: Props) {
       onClick={handleSwitch}
       disabled={isPending}
       title="Switch profile"
-      className="ml-auto border-0 bg-transparent p-1 cursor-pointer flex items-center gap-2 text-inherit hover:text-[var(--color-accent)] rounded-xl"
+      className="border-0 bg-transparent p-1 cursor-pointer flex items-center gap-2 text-inherit hover:text-[var(--color-accent)] rounded-xl"
       style={{ font: "inherit", fontSize: 15 }}
     >
       <ProfileAvatar avatarId={avatarId} size={32} />
