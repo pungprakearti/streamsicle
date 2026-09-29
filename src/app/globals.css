@@ -243,7 +243,7 @@ nav.nav a[aria-current="page"] {
 }
 .mobile-header .mobile-logo-link {
   display: block;
-  width: 100%;
+  text-align: center;
 }
 .mobile-header .logo {
   font-size: 48px;
