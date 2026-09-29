@@ -119,12 +119,12 @@ export function ProfilePicker({ profiles: initialProfiles }: Props) {
                     style={{ font: "inherit" }}
                   >
                     <span
-                      className="w-40 h-40 rounded-xl grid place-items-center"
+                      className="profile-square rounded-xl grid place-items-center"
                       style={{ background: style.bg, color: style.fg, boxShadow: "var(--shadow-md)" }}
                     >
                       <AvatarIcon avatarId={p.avatarId} size={124} />
                     </span>
-                    <span style={{ fontSize: 20, fontWeight: 600 }}>{p.name}</span>
+                    <span className="profile-label">{p.name}</span>
                   </button>
                   {managing && (
                     <div className="flex gap-1">
@@ -149,12 +149,12 @@ export function ProfilePicker({ profiles: initialProfiles }: Props) {
               style={{ font: "inherit" }}
             >
               <span
-                className="w-40 h-40 rounded-xl grid place-items-center"
+                className="profile-square rounded-xl grid place-items-center"
                 style={{ border: "2px dashed var(--color-neutral-400)", color: "var(--color-neutral-600)" }}
               >
                 <Plus size={56} weight="duotone" />
               </span>
-              <span style={{ fontSize: 20, fontWeight: 600 }}>Add profile</span>
+              <span className="profile-label">Add profile</span>
             </button>
           </div>
           {profiles.length > 0 && (

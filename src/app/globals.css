@@ -379,8 +379,29 @@ nav.nav a[aria-current="page"] {
   gap: 2px;
 }
 
+/* Profile picker */
+.profile-square {
+  width: 160px;
+  height: 160px;
+}
+.profile-label {
+  font-size: 20px;
+  font-weight: 600;
+}
+
 /* Mobile */
 @media (max-width: 640px) {
+  .profile-square {
+    width: 107px;
+    height: 107px;
+  }
+  .profile-square svg {
+    width: 80px !important;
+    height: 80px !important;
+  }
+  .profile-label {
+    font-size: 16px;
+  }
   .mobile-header {
     display: block;
   }
