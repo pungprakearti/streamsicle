@@ -1,4 +1,4 @@
-export const APP_VERSION = "0.0.13";
+export const APP_VERSION = "0.0.14";
 
 export const SERVICES = [
   { slug: "netflix", name: "Netflix" },
@@ -44,6 +44,6 @@ export const TMDB_PROVIDER_IDS: Record<string, number> = {
   max: 1899,
   apple: 350,
   hulu: 15,
-  paramount: 531,
+  paramount: 2303,
   peacock: 386,
 };

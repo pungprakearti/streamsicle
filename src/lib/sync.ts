@@ -1,14 +1,148 @@
 import { prisma } from "@/lib/db";
 import { tmdb, computeSyncHash } from "@/lib/tmdb";
-import { TMDB_PROVIDER_IDS } from "@/lib/constants";
+import { TMDB_PROVIDER_IDS, SERVICES } from "@/lib/constants";
 import { TitleType, TitleStatus } from "@prisma/client";
+import { readFileSync, writeFileSync, existsSync, mkdirSync } from "fs";
+import { join } from "path";
+
+const DISCOVERY_PATH = join(process.cwd(), "data", "discovery.json");
 
 const PROVIDER_SLUG = Object.fromEntries(
   Object.entries(TMDB_PROVIDER_IDS).map(([slug, id]) => [id, slug])
 );
 
-export interface SyncOptions {
-  limit?: number;
+export interface DiscoveryData {
+  discoveredAt: string;
+  movies: number[];
+  tv: number[];
+  providerIds: Record<string, number>;
+}
+
+async function discoverAllPages(
+  fetcher: (page: number) => Promise<{ total_pages: number; results: { id: number }[] }>,
+  maxPages = 500,
+): Promise<number[]> {
+  const ids: Set<number> = new Set();
+  const first = await fetcher(1);
+  for (const r of first.results) ids.add(r.id);
+  const pages = Math.min(first.total_pages, maxPages);
+
+  for (let page = 2; page <= pages; page++) {
+    const res = await fetcher(page);
+    for (const r of res.results) ids.add(r.id);
+  }
+  return [...ids];
+}
+
+async function resolveProviderIds(): Promise<Record<string, number>> {
+  const movieProviders = await tmdb.watchProviders("movie");
+  const tvProviders = await tmdb.watchProviders("tv");
+  const all = [...movieProviders.results, ...tvProviders.results];
+
+  const SERVICE_SEARCH: Record<string, string[]> = {
+    netflix: ["netflix"],
+    prime: ["amazon prime video"],
+    disney: ["disney plus", "disney+"],
+    max: ["max"],
+    apple: ["apple tv plus", "apple tv+"],
+    hulu: ["hulu"],
+    paramount: ["paramount plus premium", "paramount+ premium", "paramount plus", "paramount+"],
+    peacock: ["peacock premium", "peacock premium plus", "peacock"],
+  };
+
+  const resolved: Record<string, number> = {};
+
+  for (const service of SERVICES) {
+    const searchTerms = SERVICE_SEARCH[service.slug] || [service.slug];
+    let match = null;
+    for (const term of searchTerms) {
+      match = all.find((p) => p.provider_name.toLowerCase() === term);
+      if (match) break;
+    }
+    if (!match) {
+      for (const term of searchTerms) {
+        match = all.find((p) => p.provider_name.toLowerCase().includes(term));
+        if (match) break;
+      }
+    }
+    if (match) {
+      resolved[service.slug] = match.provider_id;
+      console.log(`  ${service.name}: provider_id=${match.provider_id} (${match.provider_name})`);
+    } else {
+      resolved[service.slug] = TMDB_PROVIDER_IDS[service.slug];
+      console.log(`  ${service.name}: using fallback provider_id=${resolved[service.slug]}`);
+    }
+  }
+
+  return resolved;
+}
+
+async function updateConstantsFile(providerIds: Record<string, number>): Promise<boolean> {
+  const constantsPath = join(process.cwd(), "src", "lib", "constants.ts");
+  const content = readFileSync(constantsPath, "utf-8");
+
+  const lines = Object.entries(providerIds)
+    .map(([slug, id]) => `  ${slug}: ${id},`)
+    .join("\n");
+  const newBlock = `export const TMDB_PROVIDER_IDS: Record<string, number> = {\n${lines}\n};`;
+
+  const re = /export const TMDB_PROVIDER_IDS: Record<string, number> = \{[^}]+\};/;
+  if (!re.test(content)) return false;
+
+  const updated = content.replace(re, newBlock);
+  if (updated === content) return false;
+
+  writeFileSync(constantsPath, updated);
+  return true;
+}
+
+export async function discover(): Promise<DiscoveryData> {
+  console.log("Resolving provider IDs from TMDB...");
+  const providerIds = await resolveProviderIds();
+
+  const changed = await updateConstantsFile(providerIds);
+  if (changed) {
+    console.log("  Updated src/lib/constants.ts with new provider IDs");
+  } else {
+    console.log("  Provider IDs unchanged");
+  }
+
+  const movieIds = new Set<number>();
+  const tvIds = new Set<number>();
+
+  for (const [slug, providerId] of Object.entries(providerIds)) {
+    console.log(`  Discovering movies on ${slug}...`);
+    const movies = await discoverAllPages((page) => tmdb.discoverMovies(providerId, page));
+    for (const id of movies) movieIds.add(id);
+    console.log(`    ${movies.length} movies (${movieIds.size} unique total)`);
+
+    console.log(`  Discovering TV on ${slug}...`);
+    const tv = await discoverAllPages((page) => tmdb.discoverTv(providerId, page));
+    for (const id of tv) tvIds.add(id);
+    console.log(`    ${tv.length} shows (${tvIds.size} unique total)`);
+  }
+
+  const data: DiscoveryData = {
+    discoveredAt: new Date().toISOString(),
+    movies: [...movieIds],
+    tv: [...tvIds],
+    providerIds,
+  };
+
+  if (!existsSync(join(process.cwd(), "data"))) {
+    mkdirSync(join(process.cwd(), "data"), { recursive: true });
+  }
+  writeFileSync(DISCOVERY_PATH, JSON.stringify(data, null, 2));
+
+  console.log(`Discovery complete: ${movieIds.size} movies, ${tvIds.size} TV shows`);
+  console.log(`Saved to data/discovery.json`);
+
+  return data;
+}
+
+export function loadDiscovery(): DiscoveryData | null {
+  if (!existsSync(DISCOVERY_PATH)) return null;
+  return JSON.parse(readFileSync(DISCOVERY_PATH, "utf-8"));
 }
 
 async function upsertMovie(tmdbId: number): Promise<"synced" | "skipped" | "no_service"> {
@@ -260,47 +394,24 @@ async function upsertTvShow(tmdbId: number): Promise<"synced" | "skipped" | "no_
   return "synced";
 }
 
-async function discoverAllPages(
-  fetcher: (page: number) => Promise<{ total_pages: number; results: { id: number }[] }>,
-  maxPages = 500,
-): Promise<number[]> {
-  const ids: Set<number> = new Set();
-  const first = await fetcher(1);
-  for (const r of first.results) ids.add(r.id);
-  const pages = Math.min(first.total_pages, maxPages);
-
-  for (let page = 2; page <= pages; page++) {
-    const res = await fetcher(page);
-    for (const r of res.results) ids.add(r.id);
-  }
-  return [...ids];
+export interface PullOptions {
+  limit?: number;
 }
 
-export async function syncTmdbData(options: SyncOptions = {}) {
-  const providerIds = Object.values(TMDB_PROVIDER_IDS);
-
-  const movieIds = new Set<number>();
-  const tvIds = new Set<number>();
-
-  for (const providerId of providerIds) {
-    const slugs = Object.entries(TMDB_PROVIDER_IDS).find(([, id]) => id === providerId);
-    const label = slugs ? slugs[0] : String(providerId);
-    console.log(`  Discovering movies on ${label}...`);
-    const movies = await discoverAllPages((page) => tmdb.discoverMovies(providerId, page));
-    for (const id of movies) movieIds.add(id);
-    console.log(`    ${movies.length} movies (${movieIds.size} unique total)`);
-
-    console.log(`  Discovering TV on ${label}...`);
-    const tv = await discoverAllPages((page) => tmdb.discoverTv(providerId, page));
-    for (const id of tv) tvIds.add(id);
-    console.log(`    ${tv.length} shows (${tvIds.size} unique total)`);
+export async function pull(options: PullOptions = {}) {
+  const data = loadDiscovery();
+  if (!data) {
+    throw new Error("No discovery data found. Run 'npm run sync:discover' first.");
   }
 
-  console.log(`  Discovery complete: ${movieIds.size} movies, ${tvIds.size} TV shows`);
+  const age = Date.now() - new Date(data.discoveredAt).getTime();
+  const hoursAgo = (age / 3600_000).toFixed(1);
+  console.log(`Using discovery from ${data.discoveredAt} (${hoursAgo}h ago)`);
+  console.log(`  ${data.movies.length} movies, ${data.tv.length} TV shows`);
 
   let allIds: { type: "movie" | "tv"; id: number }[] = [
-    ...[...movieIds].map((id) => ({ type: "movie" as const, id })),
-    ...[...tvIds].map((id) => ({ type: "tv" as const, id })),
+    ...data.movies.map((id) => ({ type: "movie" as const, id })),
+    ...data.tv.map((id) => ({ type: "tv" as const, id })),
   ];
 
   if (options.limit && options.limit > 0) {
@@ -309,22 +420,23 @@ export async function syncTmdbData(options: SyncOptions = {}) {
 
   let synced = 0;
   let skipped = 0;
+  let noService = 0;
   const errors: string[] = [];
   const syncStart = Date.now();
-  let lastLog = syncStart;
 
   const ticker = setInterval(() => {
     const elapsed = ((Date.now() - syncStart) / 1000).toFixed(0);
-    const processed = synced + skipped + errors.length;
+    const processed = synced + skipped + noService + errors.length;
     const pct = allIds.length > 0 ? ((processed / allIds.length) * 100).toFixed(1) : "0";
     const rate = processed > 0 ? (processed / ((Date.now() - syncStart) / 1000)).toFixed(1) : "0";
     const remaining = processed > 0
       ? Math.round((allIds.length - processed) / (processed / ((Date.now() - syncStart) / 1000)))
       : "?";
+    const mins = Math.floor(Number(remaining) / 60);
+    const secs = Number(remaining) % 60;
     console.log(
-      `  [${elapsed}s] ${processed}/${allIds.length} (${pct}%) | +${synced} synced, ${skipped} unchanged, ${errors.length} errors | ${rate}/s | ~${remaining}s left`
+      `  [${elapsed}s] ${processed}/${allIds.length} (${pct}%) | +${synced} synced, ${skipped} unchanged, ${noService} no svc, ${errors.length} err | ${rate}/s | ~${mins}m${secs}s left`
     );
-    lastLog = Date.now();
   }, 10_000);
 
   for (const entry of allIds) {
@@ -334,6 +446,7 @@ export async function syncTmdbData(options: SyncOptions = {}) {
         : await upsertTvShow(entry.id);
       if (result === "synced") synced++;
       else if (result === "skipped") skipped++;
+      else noService++;
     } catch (e) {
       errors.push(`${entry.type}/${entry.id}: ${e instanceof Error ? e.message : String(e)}`);
     }
@@ -346,10 +459,11 @@ export async function syncTmdbData(options: SyncOptions = {}) {
   return {
     synced,
     skipped,
+    noService,
     errors,
     totalSeconds,
     total: allIds.length,
-    movieCount: movieIds.size,
-    tvCount: tvIds.size,
+    movieCount: data.movies.length,
+    tvCount: data.tv.length,
   };
 }

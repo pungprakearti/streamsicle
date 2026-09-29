@@ -181,6 +181,12 @@ export const tmdb = {
   searchMulti: (query: string, page = 1) =>
     tmdbFetch<TmdbSearchResult>("/search/multi", { query, page: String(page) }),
 
+  watchProviders: (type: "movie" | "tv") =>
+    tmdbFetch<{ results: { provider_id: number; provider_name: string }[] }>(
+      `/watch/providers/${type}`,
+      { watch_region: "US" },
+    ),
+
   discoverMovies: (providerId: number, page = 1) =>
     tmdbFetch<TmdbPageResult<TmdbMovie>>("/discover/movie", {
       with_watch_providers: String(providerId),

@@ -25,6 +25,9 @@ AGENTS.md
 # production
 /build
 
+# sync data
+/data/
+
 # misc
 .DS_Store
 *.pem
