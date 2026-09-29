@@ -52,7 +52,7 @@ export default async function WatchlistPage() {
       ) : (
         <div style={{ marginTop: 32 }} className="flex flex-col gap-4 items-start">
           <p style={{ fontSize: 20, margin: 0, maxWidth: "44ch" }}>
-            Use the <BookmarkSimple size={18} weight="duotone" style={{ color: "var(--color-accent)", verticalAlign: "middle" }} /> on any poster, or Add to watchlist on a title page, to keep it here.
+            Use the{" "}<BookmarkSimple size={18} weight="duotone" style={{ color: "var(--color-accent)", verticalAlign: "middle", display: "inline" }} />{" "}on any poster, or Add to watchlist on a title page, to keep it here.
           </p>
           <Link href="/catalog" className="btn btn-primary" style={{ textDecoration: "none" }}>
             Browse the catalog
