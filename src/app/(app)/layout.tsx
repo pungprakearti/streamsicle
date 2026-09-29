@@ -17,20 +17,23 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   const watchCount = watchlist.length;
 
   return (
-    <div style={{ maxWidth: 1360, margin: "0 auto", padding: "32px clamp(32px, 5vw, 80px) 120px" }}>
+    <div className="app-shell">
       <header>
-        <div className="flex flex-wrap items-center justify-between gap-4">
+        <div className="app-header-top">
           <div className="flex flex-col gap-1">
             <Link href="/home" style={{ color: "var(--color-text)", textDecoration: "none" }}>
-              <Logo size={84} />
+              <Logo />
             </Link>
             <span style={{ fontSize: 13, letterSpacing: "0.06em", color: "var(--color-neutral-700)" }}>
               v{APP_VERSION}
             </span>
           </div>
-          <SearchBar />
+          <div className="app-header-right">
+            <ProfileSwitcher name={profile.name} avatarId={profile.avatarId} />
+          </div>
         </div>
-        <nav className="nav" style={{ padding: 0, marginTop: 16, gap: 24, flexWrap: "wrap" }}>
+        <SearchBar />
+        <nav className="app-nav">
           <Link href="/home">Front page</Link>
           <Link href="/service/netflix">By service</Link>
           <Link href="/new">New &amp; coming</Link>
@@ -38,10 +41,9 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           <Link href="/watchlist">
             Watchlist{watchCount > 0 ? ` (${watchCount})` : ""}
           </Link>
-          <ProfileSwitcher name={profile.name} avatarId={profile.avatarId} />
         </nav>
       </header>
-      <main style={{ marginTop: 72 }}>
+      <main className="app-main">
         {children}
       </main>
     </div>

@@ -33,7 +33,7 @@ export default async function TitlePage({ params }: Props) {
 
   return (
     <>
-      <Link href="/home" className="btn btn-ghost" style={{ margin: "-48px 0 16px -12px" }}>
+      <Link href="/home" className="btn btn-ghost" style={{ margin: "0 0 16px -12px" }}>
         <ArrowLeft size={18} weight="duotone" /> Back
       </Link>
 
@@ -51,15 +51,15 @@ export default async function TitlePage({ params }: Props) {
         </div>
       )}
 
-      <div className="flex flex-wrap gap-8 items-start relative" style={{ marginTop: title.backdropPath ? -150 : 0, padding: "0 24px" }}>
-        <div className="relative flex-none" style={{ width: 230, aspectRatio: "2/3", boxShadow: "var(--shadow-lg)" }}>
+      <div className="title-hero" style={{ marginTop: title.backdropPath ? -150 : 0 }}>
+        <div className="title-poster" style={{ boxShadow: "var(--shadow-lg)" }}>
           {title.posterPath ? (
             <Image
               src={`${TMDB_IMAGE_BASE}/w500${title.posterPath}`}
               alt={title.title}
               fill
               className="object-cover rounded-lg"
-              sizes="230px"
+              sizes="(max-width: 640px) 140px, 230px"
             />
           ) : (
             <div className="w-full h-full rounded-lg grid place-items-center" style={{ background: "var(--color-surface)" }}>
@@ -67,11 +67,11 @@ export default async function TitlePage({ params }: Props) {
             </div>
           )}
         </div>
-        <div className="flex flex-col gap-3" style={{ flex: "1 1 420px", minWidth: 0, paddingTop: title.backdropPath ? 170 : 0 }}>
+        <div className="title-info" style={{ paddingTop: title.backdropPath ? 170 : 0 }}>
           <span style={{ fontSize: 12, letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--color-accent-700)" }}>
             {typeLabel} {title.genres.length > 0 ? `· ${title.genres.join(" / ")}` : ""}
           </span>
-          <h2 style={{ fontSize: 64, lineHeight: 0.98, letterSpacing: "-0.03em", margin: 0 }}>
+          <h2 className="title-name">
             {title.title}
           </h2>
           <div className="flex flex-wrap gap-4" style={{ fontSize: 15 }}>
@@ -113,7 +113,7 @@ export default async function TitlePage({ params }: Props) {
                     </span>
                   </div>
                   {season.episodes.length > 0 && (
-                    <table className="table" style={{ marginTop: 16 }}>
+                    <div className="table-wrap"><table className="table" style={{ marginTop: 16 }}>
                       <thead>
                         <tr><th style={{ width: 48 }}>No.</th><th>Episode</th><th>Aired</th><th>Runtime</th></tr>
                       </thead>
@@ -135,7 +135,7 @@ export default async function TitlePage({ params }: Props) {
                           </tr>
                         ))}
                       </tbody>
-                    </table>
+                    </table></div>
                   )}
                 </div>
               ))}
@@ -214,7 +214,7 @@ export default async function TitlePage({ params }: Props) {
       {similar.length > 0 && (
         <section style={{ marginTop: 112 }}>
           <h3 style={{ fontSize: 32, margin: "0 0 24px" }}>More like this</h3>
-          <div className="grid gap-8" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(170px, 1fr))" }}>
+          <div className="grid gap-4 sm:gap-8 title-grid">
             {similar.map((t) => (
               <PosterCard
                 key={t.id}

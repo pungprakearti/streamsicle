@@ -1,9 +1,10 @@
 const HUES = [355, 18, 42, 68, 90, 125, 160, 188, 212, 240, 268];
 const LETTERS = "Streamsicle".split("");
 
-export function Logo({ size = 84 }: { size?: number }) {
+export function Logo({ size }: { size?: number }) {
   return (
     <h1
+      className="logo"
       style={{
         fontFamily: "var(--font-creepster), cursive",
         fontWeight: 400,

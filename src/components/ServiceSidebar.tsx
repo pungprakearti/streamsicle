@@ -14,9 +14,9 @@ type Props = {
 
 export function ServiceSidebar({ services, activeSlug, totalCount }: Props) {
   return (
-    <aside className="sticky" style={{ flex: "0 0 200px", top: 24 }}>
-      <h6 style={{ marginBottom: 12 }}>Services</h6>
-      <div className="flex flex-col gap-0.5">
+    <aside className="service-sidebar">
+      <h6 className="service-sidebar-heading" style={{ marginBottom: 12 }}>Services</h6>
+      <div className="service-sidebar-list">
         <Link
           href="/catalog"
           className="flex justify-between gap-2 py-1.5 no-underline"

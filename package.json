@@ -1,13 +1,14 @@
 {
   "name": "streamsicle",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev --port 3968",
     "build": "next build",
-    "start": "next start",
+    "start": "next start --port 3968",
     "lint": "eslint",
-    "seed": "npx tsx prisma/seed.ts"
+    "seed": "npx tsx prisma/seed.ts",
+    "sync": "npx tsx --env-file=.env src/scripts/sync-cli.ts"
   },
   "prisma": {
     "seed": "npx tsx prisma/seed.ts"

@@ -30,7 +30,7 @@ export function FilterBar({ basePath, genres, years }: Props) {
   };
 
   return (
-    <div className="flex flex-wrap gap-4 items-end" style={{ marginTop: 24 }}>
+    <div className="filter-bar">
       <div className="field">
         <label>Sort by</label>
         <div className="seg">

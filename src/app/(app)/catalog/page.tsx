@@ -32,7 +32,7 @@ export default async function CatalogPage({ searchParams }: Props) {
     <div className="flex flex-wrap gap-8 items-start" style={{ gap: "32px 64px" }}>
       <ServiceSidebar services={serviceCounts} totalCount={totalCount} />
       <div style={{ flex: "1 1 560px", minWidth: 0 }}>
-        <h2 style={{ fontSize: 56, letterSpacing: "-0.025em", margin: 0 }}>Full catalog</h2>
+        <h2 className="title-name">Full catalog</h2>
         <p style={{ fontStyle: "italic", fontSize: 18, marginTop: 8 }}>
           {totalCount} {totalCount === 1 ? "title" : "titles"} across all eight services
         </p>

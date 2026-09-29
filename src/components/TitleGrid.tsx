@@ -79,8 +79,8 @@ export function TitleGrid({ titles, layout, profileId, showRank = false }: Props
 
   return (
     <div
-      className="grid gap-6"
-      style={{ gridTemplateColumns: "repeat(auto-fill, minmax(170px, 1fr))", marginTop: 16 }}
+      className="grid gap-4 sm:gap-6 title-grid"
+      style={{ marginTop: 16 }}
     >
       {titles.map((t, i) => (
         <PosterCard

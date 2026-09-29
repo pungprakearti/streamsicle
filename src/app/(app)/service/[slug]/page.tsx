@@ -39,7 +39,7 @@ export default async function ServicePage({ params, searchParams }: Props) {
     <div className="flex flex-wrap gap-8 items-start" style={{ gap: "32px 64px" }}>
       <ServiceSidebar services={serviceCounts} activeSlug={slug} totalCount={totalCount} />
       <div style={{ flex: "1 1 560px", minWidth: 0 }}>
-        <h2 style={{ fontSize: 56, letterSpacing: "-0.025em", margin: 0 }}>{svc.name}</h2>
+        <h2 className="title-name">{svc.name}</h2>
         <p style={{ fontStyle: "italic", fontSize: 18, marginTop: 8 }}>
           {titles.length} {titles.length === 1 ? "title" : "titles"} streaming on {svc.name}
         </p>

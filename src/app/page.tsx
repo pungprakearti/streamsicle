@@ -13,7 +13,7 @@ export default async function GatePage() {
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center gap-8 p-8">
-      <Logo size={96} />
+      <Logo />
       <ProfilePicker profiles={profiles} />
     </div>
   );
