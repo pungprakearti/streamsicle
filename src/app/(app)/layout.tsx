@@ -23,7 +23,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         {/* Mobile header */}
         <div className="mobile-header">
           <Link href="/home" className="mobile-logo-link">
-            <Logo />
+            <Logo fullWidth />
           </Link>
           <MobileNav
             watchCount={watchCount}

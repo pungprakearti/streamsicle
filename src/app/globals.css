@@ -241,6 +241,13 @@ nav.nav a[aria-current="page"] {
 .logo {
   font-size: clamp(42px, 10vw, 84px);
 }
+.mobile-header .mobile-logo-link {
+  display: block;
+  width: 100%;
+}
+.mobile-header .logo {
+  font-size: 48px;
+}
 
 /* Mobile header */
 .mobile-header {
@@ -256,12 +263,13 @@ nav.nav a[aria-current="page"] {
   align-items: center;
   gap: 12px;
   margin-top: 4px;
+  padding-bottom: 12px;
 }
 .mobile-version {
   font-size: 13px;
   letter-spacing: 0.06em;
   color: var(--color-neutral-700);
-  margin-right: auto;
+  margin-left: auto;
 }
 .mobile-nav-toggle {
   display: flex;
