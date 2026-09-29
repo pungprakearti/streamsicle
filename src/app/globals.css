@@ -292,6 +292,7 @@ nav.nav a[aria-current="page"] {
   flex-direction: column;
   gap: 0;
   margin-top: 12px;
+  margin-bottom: 16px;
   background: var(--color-surface);
   border-radius: var(--radius-lg);
   padding: 8px 0;
