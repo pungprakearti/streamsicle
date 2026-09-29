@@ -219,13 +219,7 @@ nav.nav a[aria-current="page"] {
   display: flex;
   gap: 20px;
   margin-top: 16px;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-  scrollbar-width: none;
   padding-bottom: 4px;
-}
-.app-nav::-webkit-scrollbar {
-  display: none;
 }
 .app-nav a {
   text-decoration: none;
@@ -246,6 +240,74 @@ nav.nav a[aria-current="page"] {
 }
 .logo {
   font-size: clamp(42px, 10vw, 84px);
+}
+
+/* Mobile header */
+.mobile-header {
+  display: none;
+}
+.mobile-logo-link {
+  color: var(--color-text);
+  text-decoration: none;
+  display: block;
+}
+.mobile-header-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 4px;
+}
+.mobile-version {
+  font-size: 13px;
+  letter-spacing: 0.06em;
+  color: var(--color-neutral-700);
+  margin-right: auto;
+}
+.mobile-nav-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border: 0;
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  color: var(--color-text);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.mobile-nav-toggle:hover {
+  background: var(--color-neutral-100);
+}
+.mobile-nav-drawer {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  margin-top: 12px;
+  background: var(--color-surface);
+  border-radius: var(--radius-lg);
+  padding: 8px 0;
+  box-shadow: var(--shadow-md);
+}
+.mobile-nav-drawer a {
+  display: block;
+  padding: 12px 20px;
+  text-decoration: none;
+  color: var(--color-neutral-600);
+  font-size: 17px;
+}
+.mobile-nav-drawer a:hover {
+  color: var(--color-accent);
+  background: var(--color-neutral-100);
+}
+.mobile-nav-drawer a[aria-current="page"] {
+  color: var(--color-accent-700);
+  font-weight: 600;
+}
+
+/* Desktop header visible by default */
+.desktop-header {
+  display: block;
 }
 
 /* Table wrap for mobile scroll */
@@ -311,6 +373,12 @@ nav.nav a[aria-current="page"] {
 
 /* Mobile */
 @media (max-width: 640px) {
+  .mobile-header {
+    display: block;
+  }
+  .desktop-header {
+    display: none;
+  }
   .app-shell {
     padding: 16px 16px 80px;
   }
