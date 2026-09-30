@@ -1,11 +1,11 @@
 import { redirect } from "next/navigation";
-import { getActiveProfileId, getProfiles } from "@/actions/profiles";
+import { getActiveProfile, getProfiles } from "@/actions/profiles";
 import { ProfilePicker } from "@/components/ProfilePicker";
 import { Logo } from "@/components/Logo";
 
 export default async function GatePage() {
-  const profileId = await getActiveProfileId();
-  if (profileId) {
+  const profile = await getActiveProfile();
+  if (profile) {
     redirect("/home");
   }
 

@@ -21,6 +21,11 @@ export async function getActiveProfile() {
   return prisma.profile.findUnique({ where: { id } });
 }
 
+export async function clearActiveProfile() {
+  const cookieStore = await cookies();
+  cookieStore.delete(PROFILE_COOKIE);
+}
+
 export async function createProfile(name: string, avatarId: string) {
   const profile = await prisma.profile.create({
     data: { name, avatarId },
