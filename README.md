@@ -2,6 +2,8 @@
 
 A local streaming content ledger for tracking what's available across your family's streaming services.
 
+![Streamsicle desktop screenshot](docs/screenshot-desktop.png)
+
 ## Features
 
 - Browse content across Netflix, Prime Video, Disney+, Max, Apple TV+, Hulu, Paramount+, and Peacock
@@ -80,4 +82,4 @@ The app stays fully usable during a pull - new titles appear as they're synced.
 
 ## Version
 
-v0.0.18
+v0.0.19
