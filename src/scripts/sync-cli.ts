@@ -4,6 +4,7 @@ function parseArgs() {
   const args = process.argv.slice(2);
   const command = args[0];
   let limit: number | undefined;
+  let full = false;
 
   for (let i = 1; i < args.length; i++) {
     if (args[i] === "--limit" && args[i + 1]) {
@@ -14,9 +15,12 @@ function parseArgs() {
       }
       limit = n;
     }
+    if (args[i] === "--full") {
+      full = true;
+    }
   }
 
-  return { command, limit };
+  return { command, limit, full };
 }
 
 function formatTime(seconds: number): string {
@@ -28,7 +32,7 @@ function formatTime(seconds: number): string {
 }
 
 async function main() {
-  const { command, limit } = parseArgs();
+  const { command, limit, full } = parseArgs();
 
   if (command === "discover") {
     console.log(`[${new Date().toISOString()}] Starting discovery...`);
@@ -46,10 +50,11 @@ async function main() {
       process.exit(1);
     }
 
-    const label = limit ? ` (limit: ${limit})` : "";
+    const parts = [limit && `limit: ${limit}`, full && "full"].filter(Boolean);
+    const label = parts.length ? ` (${parts.join(", ")})` : "";
     console.log(`[${new Date().toISOString()}] Starting pull${label}...`);
 
-    const result = await pull({ limit });
+    const result = await pull({ limit, full });
 
     console.log(`[${new Date().toISOString()}] Pull complete in ${formatTime(Number(result.totalSeconds))}:`);
     console.log(`  Synced: ${result.synced}`);
@@ -76,6 +81,13 @@ async function main() {
       const hoursAgo = (age / 3600_000).toFixed(1);
       console.log(`Last discovery: ${data.discoveredAt} (${hoursAgo}h ago)`);
       console.log(`  ${data.movies.length} movies, ${data.tv.length} TV shows`);
+      if (data.lastPulledAt) {
+        const pullAge = Date.now() - new Date(data.lastPulledAt).getTime();
+        const pullHoursAgo = (pullAge / 3600_000).toFixed(1);
+        console.log(`Last pull: ${data.lastPulledAt} (${pullHoursAgo}h ago)`);
+      } else {
+        console.log(`Last pull: never`);
+      }
       console.log(`  Provider IDs:`, data.providerIds);
     }
 
@@ -84,7 +96,7 @@ async function main() {
     console.log("");
     console.log("Commands:");
     console.log("  discover          Fetch all title IDs from TMDB (run once a day)");
-    console.log("  pull [--limit N]  Pull title data into the database");
+    console.log("  pull [--limit N] [--full]  Pull title data (incremental by default)");
     console.log("  status            Show discovery cache info");
     process.exit(1);
   }

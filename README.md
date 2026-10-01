@@ -82,4 +82,4 @@ The app stays fully usable during a pull - new titles appear as they're synced.
 
 ## Version
 
-v0.0.19
+v0.0.20

@@ -13,6 +13,7 @@ const PROVIDER_SLUG = Object.fromEntries(
 
 export interface DiscoveryData {
   discoveredAt: string;
+  lastPulledAt?: string;
   movies: number[];
   tv: number[];
   providerIds: Record<string, number>;
@@ -394,8 +395,29 @@ async function upsertTvShow(tmdbId: number): Promise<"synced" | "skipped" | "no_
   return "synced";
 }
 
+async function fetchChangedIds(
+  type: "movie" | "tv",
+  since: string,
+): Promise<Set<number>> {
+  const ids = new Set<number>();
+  const fetcher = type === "movie" ? tmdb.movieChanges : tmdb.tvChanges;
+  const first = await fetcher(since, 1);
+  for (const r of first.results) ids.add(r.id);
+  const pages = Math.min(first.total_pages, 500);
+  for (let page = 2; page <= pages; page++) {
+    const res = await fetcher(since, page);
+    for (const r of res.results) ids.add(r.id);
+  }
+  return ids;
+}
+
 export interface PullOptions {
   limit?: number;
+  full?: boolean;
+}
+
+function saveDiscovery(data: DiscoveryData) {
+  writeFileSync(DISCOVERY_PATH, JSON.stringify(data, null, 2));
 }
 
 export async function pull(options: PullOptions = {}) {
@@ -409,9 +431,27 @@ export async function pull(options: PullOptions = {}) {
   console.log(`Using discovery from ${data.discoveredAt} (${hoursAgo}h ago)`);
   console.log(`  ${data.movies.length} movies, ${data.tv.length} TV shows`);
 
+  const canIncremental = !options.full && data.lastPulledAt;
+  let changedMovieIds: Set<number> | null = null;
+  let changedTvIds: Set<number> | null = null;
+
+  if (canIncremental) {
+    const sinceDate = data.lastPulledAt!.slice(0, 10);
+    console.log(`Incremental mode: fetching changes since ${sinceDate}...`);
+    changedMovieIds = await fetchChangedIds("movie", sinceDate);
+    changedTvIds = await fetchChangedIds("tv", sinceDate);
+    console.log(`  ${changedMovieIds.size} movies and ${changedTvIds.size} TV shows changed`);
+  } else {
+    console.log(`Full pull mode`);
+  }
+
   let allIds: { type: "movie" | "tv"; id: number }[] = [
-    ...data.movies.map((id) => ({ type: "movie" as const, id })),
-    ...data.tv.map((id) => ({ type: "tv" as const, id })),
+    ...data.movies
+      .filter((id) => !changedMovieIds || changedMovieIds.has(id))
+      .map((id) => ({ type: "movie" as const, id })),
+    ...data.tv
+      .filter((id) => !changedTvIds || changedTvIds.has(id))
+      .map((id) => ({ type: "tv" as const, id })),
   ];
 
   if (options.limit && options.limit > 0) {
@@ -456,6 +496,9 @@ export async function pull(options: PullOptions = {}) {
 
   const totalSeconds = ((Date.now() - syncStart) / 1000).toFixed(1);
 
+  data.lastPulledAt = new Date().toISOString();
+  saveDiscovery(data);
+
   return {
     synced,
     skipped,
@@ -465,5 +508,6 @@ export async function pull(options: PullOptions = {}) {
     total: allIds.length,
     movieCount: data.movies.length,
     tvCount: data.tv.length,
+    incremental: !!changedMovieIds,
   };
 }

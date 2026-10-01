@@ -1,3 +1,3 @@
 "use server";
 
-export { syncTmdbData } from "@/lib/sync";
+export { pull as syncTmdbData } from "@/lib/sync";

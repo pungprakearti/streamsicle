@@ -1,6 +1,6 @@
 {
   "name": "streamsicle",
-  "version": "0.0.19",
+  "version": "0.0.20",
   "private": true,
   "scripts": {
     "dev": "next dev --port 3968",
@@ -11,6 +11,7 @@
     "sync": "npx tsx --env-file=.env src/scripts/sync-cli.ts",
     "sync:discover": "npx tsx --env-file=.env src/scripts/sync-cli.ts discover",
     "sync:pull": "npx tsx --env-file=.env src/scripts/sync-cli.ts pull",
+    "sync:all": "npm run sync:discover && npm run sync:pull",
     "sync:status": "npx tsx --env-file=.env src/scripts/sync-cli.ts status"
   },
   "prisma": {

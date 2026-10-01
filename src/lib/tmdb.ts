@@ -204,6 +204,18 @@ export const tmdb = {
       sort_by: "popularity.desc",
       page: String(page),
     }),
+
+  movieChanges: (startDate: string, page = 1) =>
+    tmdbFetch<TmdbPageResult<{ id: number }>>("/movie/changes", {
+      start_date: startDate,
+      page: String(page),
+    }),
+
+  tvChanges: (startDate: string, page = 1) =>
+    tmdbFetch<TmdbPageResult<{ id: number }>>("/tv/changes", {
+      start_date: startDate,
+      page: String(page),
+    }),
 };
 
 const GENRE_MAP: Record<number, string> = {
