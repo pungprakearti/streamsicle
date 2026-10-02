@@ -1,5 +1,6 @@
 "use client";
 
+import { useId } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { SquaresFour, List } from "@phosphor-icons/react";
 
@@ -12,6 +13,11 @@ type Props = {
 export function FilterBar({ basePath, genres, years }: Props) {
   const router = useRouter();
   const params = useSearchParams();
+  const sortId = useId();
+  const typeId = useId();
+  const layoutId = useId();
+  const genreId = useId();
+  const yearId = useId();
 
   const sort = params.get("sort") || "alpha";
   const type = params.get("type") || "all";
@@ -32,8 +38,8 @@ export function FilterBar({ basePath, genres, years }: Props) {
   return (
     <div className="filter-bar">
       <div className="field">
-        <label>Sort by</label>
-        <div className="seg">
+        <span id={sortId} className="field-label">Sort by</span>
+        <div className="seg" role="radiogroup" aria-labelledby={sortId}>
           {[["alpha", "A-Z"], ["date", "Release date"], ["pop", "Popularity"]].map(([v, l]) => (
             <label key={v} className="seg-opt">
               <input type="radio" name="sort" checked={sort === v} onChange={() => update("sort", v)} />
@@ -43,8 +49,8 @@ export function FilterBar({ basePath, genres, years }: Props) {
         </div>
       </div>
       <div className="field">
-        <label>Type</label>
-        <div className="seg">
+        <span id={typeId} className="field-label">Type</span>
+        <div className="seg" role="radiogroup" aria-labelledby={typeId}>
           {[["all", "All"], ["FILM", "Films"], ["SERIES", "Series"]].map(([v, l]) => (
             <label key={v} className="seg-opt">
               <input type="radio" name="type" checked={type === v} onChange={() => update("type", v)} />
@@ -54,8 +60,10 @@ export function FilterBar({ basePath, genres, years }: Props) {
         </div>
       </div>
       <div className="field">
-        <label>Genre</label>
+        <label htmlFor={genreId}>Genre</label>
         <select
+          id={genreId}
+          name="genre"
           className="input"
           value={genre}
           onChange={(e) => update("genre", e.target.value)}
@@ -68,8 +76,10 @@ export function FilterBar({ basePath, genres, years }: Props) {
         </select>
       </div>
       <div className="field">
-        <label>Year</label>
+        <label htmlFor={yearId}>Year</label>
         <select
+          id={yearId}
+          name="year"
           className="input"
           value={year}
           onChange={(e) => update("year", e.target.value)}
@@ -82,8 +92,8 @@ export function FilterBar({ basePath, genres, years }: Props) {
         </select>
       </div>
       <div className="field" style={{ marginLeft: "auto" }}>
-        <label>View</label>
-        <div className="seg">
+        <span id={layoutId} className="field-label">View</span>
+        <div className="seg" role="radiogroup" aria-labelledby={layoutId}>
           <label className="seg-opt">
             <input type="radio" name="layout" checked={layout === "grid"} onChange={() => update("layout", "grid")} />
             <SquaresFour size={16} weight="duotone" /> Grid

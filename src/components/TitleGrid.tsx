@@ -3,6 +3,9 @@ import Link from "next/link";
 import { PosterCard } from "./PosterCard";
 import { TMDB_IMAGE_BASE } from "@/lib/constants";
 
+// Enough to cover the first visible row on wide screens
+export const EAGER_POSTER_COUNT = 12;
+
 type TitleItem = {
   id: string;
   title: string;
@@ -50,6 +53,7 @@ export function TitleGrid({ titles, layout, profileId, showRank = false }: Props
                         fill
                         className="object-cover rounded"
                         sizes="80px"
+                        loading={i < EAGER_POSTER_COUNT ? "eager" : undefined}
                       />
                     )}
                   </div>
@@ -92,8 +96,8 @@ export function TitleGrid({ titles, layout, profileId, showRank = false }: Props
           posterPath={t.posterPath}
           serviceNames={t.services.map((s) => s.service.name).join(" · ")}
           rankLabel={showRank ? `No. ${i + 1}` : undefined}
-          status={t.status}
           isOnWatchlist={profileId ? t.watchlist.some((w) => w.profileId === profileId) : false}
+          eager={i < EAGER_POSTER_COUNT}
         />
       ))}
     </div>

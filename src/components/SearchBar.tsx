@@ -1,7 +1,7 @@
 "use client";
 
 import { MagnifyingGlass } from "@phosphor-icons/react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 export function SearchBar({ initialQuery = "" }: { initialQuery?: string }) {
@@ -32,6 +32,8 @@ export function SearchBar({ initialQuery = "" }: { initialQuery?: string }) {
       />
       <input
         type="search"
+        name="q"
+        aria-label="Search"
         className="input"
         placeholder="Search films, series, directors"
         value={query}

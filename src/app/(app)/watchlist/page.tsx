@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { getFullWatchlist } from "@/actions/watchlist";
-import { getActiveProfileId } from "@/actions/profiles";
 import { PosterCard } from "@/components/PosterCard";
+import { EAGER_POSTER_COUNT } from "@/components/TitleGrid";
 import { ProfileAvatar } from "@/components/ProfilePicker";
 import { BookmarkSimple } from "@phosphor-icons/react/dist/ssr";
 
@@ -10,10 +10,7 @@ function formatDate(d: Date) {
 }
 
 export default async function WatchlistPage() {
-  const [watchlist, profileId] = await Promise.all([
-    getFullWatchlist(),
-    getActiveProfileId(),
-  ]);
+  const watchlist = await getFullWatchlist();
 
   const upcomingCount = watchlist.filter((w) => w.title.status === "UPCOMING").length;
 
@@ -31,7 +28,7 @@ export default async function WatchlistPage() {
           className="grid gap-8"
           style={{ gridTemplateColumns: "repeat(auto-fill, minmax(170px, 1fr))", marginTop: 32 }}
         >
-          {watchlist.map((w) => (
+          {watchlist.map((w, i) => (
             <div key={w.id} className="flex flex-col gap-2">
               <PosterCard
                 id={w.title.id}
@@ -41,6 +38,7 @@ export default async function WatchlistPage() {
                 posterPath={w.title.posterPath}
                 serviceNames={w.title.services.map((s) => s.service.name).join(" · ")}
                 isOnWatchlist={true}
+                eager={i < EAGER_POSTER_COUNT}
               />
               <span className="flex items-center gap-1.5" style={{ fontSize: 12, fontStyle: "italic", color: "var(--color-neutral-700)" }}>
                 <ProfileAvatar avatarId={w.profile.avatarId} size={20} />

@@ -45,7 +45,7 @@ export default async function TitlePage({ params }: Props) {
             fill
             className="object-cover"
             sizes="100vw"
-            priority
+            preload
           />
           <div className="absolute inset-0 pointer-events-none" style={{ background: "linear-gradient(to bottom, transparent 50%, var(--color-bg))" }} />
         </div>
@@ -60,6 +60,7 @@ export default async function TitlePage({ params }: Props) {
               fill
               className="object-cover rounded-lg"
               sizes="(max-width: 640px) 140px, 230px"
+              loading="eager"
             />
           ) : (
             <div className="w-full h-full rounded-lg grid place-items-center" style={{ background: "var(--color-surface)" }}>

@@ -3,7 +3,7 @@
 import { List, X } from "@phosphor-icons/react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { ProfileSwitcher } from "./ProfileSwitcher";
 
 type Props = {
@@ -24,10 +24,13 @@ const NAV_LINKS = [
 export function MobileNav({ watchCount, profileName, profileAvatarId, version }: Props) {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
+  const [lastPathname, setLastPathname] = useState(pathname);
 
-  useEffect(() => {
+  // Close the menu on navigation (adjusting state during render, not in an effect)
+  if (pathname !== lastPathname) {
+    setLastPathname(pathname);
     setOpen(false);
-  }, [pathname]);
+  }
 
   return (
     <>

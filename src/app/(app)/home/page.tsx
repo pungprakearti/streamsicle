@@ -1,10 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { getNewTitles, getUpcomingTitles, getPopularTitles, getServiceCounts } from "@/lib/queries";
-import { getActiveProfileId } from "@/actions/profiles";
 import { TMDB_IMAGE_BASE } from "@/lib/constants";
-import { PosterCard } from "@/components/PosterCard";
-import { WatchlistButton } from "@/components/WatchlistButton";
 
 function formatDate(d: Date | null) {
   if (!d) return "";
@@ -12,12 +9,11 @@ function formatDate(d: Date | null) {
 }
 
 export default async function HomePage() {
-  const [newTitles, upcoming, popular, serviceCounts, profileId] = await Promise.all([
+  const [newTitles, upcoming, popular, serviceCounts] = await Promise.all([
     getNewTitles(),
     getUpcomingTitles(),
     getPopularTitles(10),
     getServiceCounts(),
-    getActiveProfileId(),
   ]);
 
   const lead = newTitles[0];
@@ -37,7 +33,7 @@ export default async function HomePage() {
                     fill
                     className="object-cover rounded-lg"
                     sizes="240px"
-                    priority
+                    preload
                   />
                 )}
                 <Link href={`/title/${lead.id}`} className="absolute inset-0 z-[1]" />

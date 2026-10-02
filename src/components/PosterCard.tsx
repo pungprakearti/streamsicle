@@ -11,9 +11,9 @@ type Props = {
   posterPath: string | null;
   serviceNames: string;
   rankLabel?: string;
-  status?: string;
   showWatchlist?: boolean;
   isOnWatchlist?: boolean;
+  eager?: boolean;
 };
 
 export function PosterCard({
@@ -24,9 +24,9 @@ export function PosterCard({
   posterPath,
   serviceNames,
   rankLabel,
-  status,
   showWatchlist = true,
   isOnWatchlist = false,
+  eager = false,
 }: Props) {
   return (
     <div className="flex flex-col gap-2">
@@ -38,6 +38,7 @@ export function PosterCard({
             fill
             className="object-cover rounded-lg"
             sizes="(max-width: 640px) 50vw, 170px"
+            loading={eager ? "eager" : undefined}
           />
         ) : (
           <div
@@ -66,7 +67,7 @@ export function PosterCard({
           )}
         </span>
         <span
-          className="font-semibold leading-tight hover:text-[var(--color-accent)] transition-colors"
+          className="font-semibold leading-tight [overflow-wrap:anywhere] hover:text-[var(--color-accent)] transition-colors"
           style={{ fontSize: 18 }}
         >
           {title}
