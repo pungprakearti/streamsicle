@@ -123,8 +123,11 @@ export async function discover(): Promise<DiscoveryData> {
     console.log(`    ${tv.length} shows (${tvIds.size} unique total)`);
   }
 
+  // Preserve lastPulledAt from previous discovery so incremental pull keeps working
+  const previous = loadDiscovery();
   const data: DiscoveryData = {
     discoveredAt: new Date().toISOString(),
+    lastPulledAt: previous?.lastPulledAt,
     movies: [...movieIds],
     tv: [...tvIds],
     providerIds,
@@ -430,6 +433,16 @@ export async function pull(options: PullOptions = {}) {
   const hoursAgo = (age / 3600_000).toFixed(1);
   console.log(`Using discovery from ${data.discoveredAt} (${hoursAgo}h ago)`);
   console.log(`  ${data.movies.length} movies, ${data.tv.length} TV shows`);
+
+  // If lastPulledAt is missing but DB already has titles, recover it from the DB
+  if (!data.lastPulledAt && !options.full) {
+    const latest = await prisma.title.findFirst({ orderBy: { updatedAt: "desc" }, select: { updatedAt: true } });
+    if (latest?.updatedAt) {
+      data.lastPulledAt = latest.updatedAt.toISOString();
+      saveDiscovery(data);
+      console.log(`  Recovered lastPulledAt from DB: ${data.lastPulledAt}`);
+    }
+  }
 
   const canIncremental = !options.full && data.lastPulledAt;
   let changedMovieIds: Set<number> | null = null;
