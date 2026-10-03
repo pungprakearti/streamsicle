@@ -7,6 +7,7 @@ import { SearchBar } from "@/components/SearchBar";
 import { ProfileSwitcher } from "@/components/ProfileSwitcher";
 import { MobileNav } from "@/components/MobileNav";
 import { APP_VERSION } from "@/lib/constants";
+import { BackToTop } from "@/components/BackToTop";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const profile = await getActiveProfile();
@@ -63,6 +64,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       </header>
       <main className="app-main">
         {children}
+        <BackToTop />
       </main>
     </div>
   );

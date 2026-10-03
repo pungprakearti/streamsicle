@@ -1,6 +1,6 @@
 "use client";
 
-import { MagnifyingGlass } from "@phosphor-icons/react";
+import { MagnifyingGlass, X } from "@phosphor-icons/react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
@@ -22,6 +22,10 @@ export function SearchBar({ initialQuery = "" }: { initialQuery?: string }) {
     }
   };
 
+  const handleClear = () => {
+    setQuery("");
+  };
+
   return (
     <div className="relative" style={{ width: "min(420px, 100%)" }}>
       <MagnifyingGlass
@@ -39,8 +43,28 @@ export function SearchBar({ initialQuery = "" }: { initialQuery?: string }) {
         value={query}
         onChange={handleChange}
         onKeyDown={handleKeyDown}
-        style={{ paddingLeft: 36, minHeight: 44, fontSize: 15 }}
+        style={{ paddingLeft: 36, paddingRight: query ? 36 : 12, minHeight: 44, fontSize: 15 }}
       />
+      {query && (
+        <button
+          type="button"
+          onClick={handleClear}
+          aria-label="Clear search"
+          className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center justify-center"
+          style={{
+            width: 24,
+            height: 24,
+            borderRadius: "50%",
+            background: "var(--color-neutral-300)",
+            color: "var(--color-neutral-800)",
+            border: "none",
+            cursor: "pointer",
+            padding: 0,
+          }}
+        >
+          <X size={14} weight="bold" />
+        </button>
+      )}
     </div>
   );
 }
