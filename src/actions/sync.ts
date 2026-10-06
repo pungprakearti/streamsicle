@@ -1,3 +1,7 @@
 "use server";
 
-export { pull as syncTmdbData } from "@/lib/sync";
+import { pull } from "@/lib/sync";
+
+export async function syncTmdbData() {
+  return pull();
+}

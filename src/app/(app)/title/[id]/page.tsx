@@ -77,6 +77,7 @@ export default async function TitlePage({ params }: Props) {
           </h2>
           <div className="flex flex-wrap gap-4" style={{ fontSize: 15 }}>
             <span>{formatDate(title.releaseDate)}</span>
+            {title.contentRating && <span>{title.contentRating}</span>}
             {title.runtime && <span>{title.type === "FILM" ? `${title.runtime} min` : `${title.seasons?.length ?? 0} season${(title.seasons?.length ?? 0) === 1 ? "" : "s"}`}</span>}
             {title.rating && <span>Rated {title.rating}</span>}
           </div>
@@ -224,6 +225,7 @@ export default async function TitlePage({ params }: Props) {
                 typeLabel={t.type === "FILM" ? "Film" : "Series"}
                 year={t.releaseDate?.getFullYear() ?? null}
                 posterPath={t.posterPath}
+                contentRating={t.contentRating}
                 serviceNames={t.services.map((s) => s.service.name).join(" · ")}
                 isOnWatchlist={profileId ? t.watchlist.some((w) => w.profileId === profileId) : false}
               />

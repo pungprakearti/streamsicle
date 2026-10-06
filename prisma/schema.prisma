@@ -35,6 +35,7 @@ model Title {
   releaseDate    DateTime? @map("release_date")
   status         TitleStatus @default(CATALOG)
   rating         String?
+  contentRating  String?  @map("content_rating")
   runtime        Int?
   genres         String[]
   tmdbPopularity Float    @default(0) @map("tmdb_popularity")

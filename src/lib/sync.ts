@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/db";
-import { tmdb, computeSyncHash } from "@/lib/tmdb";
+import { tmdb, computeSyncHash, extractMovieContentRating, extractTvContentRating } from "@/lib/tmdb";
 import { TMDB_PROVIDER_IDS, SERVICES } from "@/lib/constants";
 import { TitleType, TitleStatus } from "@prisma/client";
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from "fs";
@@ -150,10 +150,11 @@ export function loadDiscovery(): DiscoveryData | null {
 }
 
 async function upsertMovie(tmdbId: number): Promise<"synced" | "skipped" | "no_service"> {
-  const [detail, credits, providers] = await Promise.all([
+  const [detail, credits, providers, releaseDates] = await Promise.all([
     tmdb.movieDetail(tmdbId),
     tmdb.movieCredits(tmdbId),
     tmdb.movieProviders(tmdbId),
+    tmdb.movieReleaseDates(tmdbId),
   ]);
 
   const flatrate = providers.results?.US?.flatrate || [];
@@ -180,6 +181,7 @@ async function upsertMovie(tmdbId: number): Promise<"synced" | "skipped" | "no_s
   }
 
   const director = credits.crew.find((c) => c.job === "Director");
+  const contentRating = extractMovieContentRating(releaseDates);
 
   const title = await prisma.title.upsert({
     where: { tmdbId },
@@ -189,6 +191,7 @@ async function upsertMovie(tmdbId: number): Promise<"synced" | "skipped" | "no_s
       releaseDate,
       status,
       rating: detail.vote_average ? detail.vote_average.toFixed(1) : null,
+      contentRating,
       runtime: detail.runtime,
       genres: detail.genres.map((g) => g.name),
       tmdbPopularity: detail.popularity,
@@ -205,6 +208,7 @@ async function upsertMovie(tmdbId: number): Promise<"synced" | "skipped" | "no_s
       releaseDate,
       status,
       rating: detail.vote_average ? detail.vote_average.toFixed(1) : null,
+      contentRating,
       runtime: detail.runtime,
       genres: detail.genres.map((g) => g.name),
       tmdbPopularity: detail.popularity,
@@ -255,10 +259,11 @@ async function upsertMovie(tmdbId: number): Promise<"synced" | "skipped" | "no_s
 }
 
 async function upsertTvShow(tmdbId: number): Promise<"synced" | "skipped" | "no_service"> {
-  const [detail, credits, providers] = await Promise.all([
+  const [detail, credits, providers, contentRatings] = await Promise.all([
     tmdb.tvDetail(tmdbId),
     tmdb.tvCredits(tmdbId),
     tmdb.tvProviders(tmdbId),
+    tmdb.tvContentRatings(tmdbId),
   ]);
 
   const flatrate = providers.results?.US?.flatrate || [];
@@ -288,6 +293,7 @@ async function upsertTvShow(tmdbId: number): Promise<"synced" | "skipped" | "no_
   const avgRuntime = detail.episode_run_time?.length
     ? Math.round(detail.episode_run_time.reduce((a, b) => a + b, 0) / detail.episode_run_time.length)
     : null;
+  const contentRating = extractTvContentRating(contentRatings);
 
   const title = await prisma.title.upsert({
     where: { tmdbId },
@@ -297,6 +303,7 @@ async function upsertTvShow(tmdbId: number): Promise<"synced" | "skipped" | "no_
       releaseDate,
       status,
       rating: detail.vote_average ? detail.vote_average.toFixed(1) : null,
+      contentRating,
       runtime: avgRuntime,
       genres: detail.genres.map((g) => g.name),
       tmdbPopularity: detail.popularity,
@@ -313,6 +320,7 @@ async function upsertTvShow(tmdbId: number): Promise<"synced" | "skipped" | "no_
       releaseDate,
       status,
       rating: detail.vote_average ? detail.vote_average.toFixed(1) : null,
+      contentRating,
       runtime: avgRuntime,
       genres: detail.genres.map((g) => g.name),
       tmdbPopularity: detail.popularity,

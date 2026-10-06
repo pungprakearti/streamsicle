@@ -16,6 +16,7 @@ type TitleItem = {
   genres: string[];
   credit: string | null;
   tmdbPopularity: number;
+  contentRating: string | null;
   status: "CATALOG" | "NEW" | "UPCOMING";
   services: { service: { name: string } }[];
   watchlist: { profileId: string }[];
@@ -36,6 +37,7 @@ export function TitleGrid({ titles, layout, profileId, showRank = false }: Props
           <tr>
             <th>Title</th>
             <th>Type</th>
+            <th>Rating</th>
             <th>Released</th>
             <th>Streaming on</th>
             {showRank && <th>Popularity</th>}
@@ -67,6 +69,7 @@ export function TitleGrid({ titles, layout, profileId, showRank = false }: Props
                   </Link>
                 </td>
                 <td>{t.type === "FILM" ? "Film" : "Series"}</td>
+                <td>{t.contentRating || ""}</td>
                 <td style={{ whiteSpace: "nowrap" }}>
                   {t.releaseDate ? t.releaseDate.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : ""}
                 </td>
@@ -98,6 +101,7 @@ export function TitleGrid({ titles, layout, profileId, showRank = false }: Props
             typeLabel={t.type === "FILM" ? "Film" : "Series"}
             year={t.releaseDate?.getFullYear() ?? null}
             posterPath={t.posterPath}
+            contentRating={t.contentRating}
             serviceNames={t.services.map((s) => s.service.name).join(" · ")}
             rankLabel={showRank ? `No. ${i + 1}` : undefined}
             isOnWatchlist={profileId ? t.watchlist.some((w) => w.profileId === profileId) : false}

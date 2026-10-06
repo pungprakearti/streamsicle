@@ -123,6 +123,20 @@ export interface TmdbSeasonDetail {
   }[];
 }
 
+export interface TmdbReleaseDates {
+  results: {
+    iso_3166_1: string;
+    release_dates: { certification: string; type: number }[];
+  }[];
+}
+
+export interface TmdbContentRatings {
+  results: {
+    iso_3166_1: string;
+    rating: string;
+  }[];
+}
+
 export interface TmdbWatchProviders {
   results: {
     US?: {
@@ -171,6 +185,12 @@ export const tmdb = {
 
   tvSeason: (tvId: number, seasonNumber: number) =>
     tmdbFetch<TmdbSeasonDetail>(`/tv/${tvId}/season/${seasonNumber}`),
+
+  movieReleaseDates: (id: number) =>
+    tmdbFetch<TmdbReleaseDates>(`/movie/${id}/release_dates`),
+
+  tvContentRatings: (id: number) =>
+    tmdbFetch<TmdbContentRatings>(`/tv/${id}/content_ratings`),
 
   movieProviders: (id: number) =>
     tmdbFetch<TmdbWatchProviders>(`/movie/${id}/watch/providers`),
@@ -229,6 +249,19 @@ const GENRE_MAP: Record<number, string> = {
 
 export function genreIdsToNames(ids: number[]): string[] {
   return ids.map((id) => GENRE_MAP[id] || "Unknown").filter((g) => g !== "Unknown");
+}
+
+export function extractMovieContentRating(data: TmdbReleaseDates): string | null {
+  const us = data.results.find((r) => r.iso_3166_1 === "US");
+  if (!us) return null;
+  const theatrical = us.release_dates.find((r) => r.type === 3);
+  const any = theatrical || us.release_dates.find((r) => r.certification);
+  return any?.certification || null;
+}
+
+export function extractTvContentRating(data: TmdbContentRatings): string | null {
+  const us = data.results.find((r) => r.iso_3166_1 === "US");
+  return us?.rating || null;
 }
 
 export function computeSyncHash(detail: TmdbMovieDetail | TmdbTvDetail, providers: TmdbWatchProviders): string {

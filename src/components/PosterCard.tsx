@@ -9,6 +9,7 @@ type Props = {
   typeLabel: string;
   year: number | null;
   posterPath: string | null;
+  contentRating?: string | null;
   serviceNames: string;
   rankLabel?: string;
   showWatchlist?: boolean;
@@ -22,6 +23,7 @@ export function PosterCard({
   typeLabel,
   year,
   posterPath,
+  contentRating,
   serviceNames,
   rankLabel,
   showWatchlist = true,
@@ -55,6 +57,23 @@ export function PosterCard({
         />
         {showWatchlist && (
           <WatchlistButton titleId={id} isOnList={isOnWatchlist} />
+        )}
+        {contentRating && (
+          <span
+            className="absolute z-[2] font-semibold"
+            style={{
+              bottom: 6,
+              left: 6,
+              fontSize: 9,
+              letterSpacing: "0.05em",
+              padding: "2px 5px",
+              borderRadius: 4,
+              background: "rgba(0,0,0,0.75)",
+              color: "#fff",
+            }}
+          >
+            {contentRating}
+          </span>
         )}
       </div>
       <Link href={`/title/${id}`} className="no-underline text-inherit flex flex-col gap-0.5">
