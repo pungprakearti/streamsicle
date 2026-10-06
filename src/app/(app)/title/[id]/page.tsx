@@ -79,7 +79,7 @@ export default async function TitlePage({ params }: Props) {
             <span>{formatDate(title.releaseDate)}</span>
             {title.contentRating && <span>{title.contentRating}</span>}
             {title.runtime && <span>{title.type === "FILM" ? `${title.runtime} min` : `${title.seasons?.length ?? 0} season${(title.seasons?.length ?? 0) === 1 ? "" : "s"}`}</span>}
-            {title.rating && <span>Rated {title.rating}</span>}
+            {title.rating && <span>{title.rating}/10</span>}
           </div>
           {title.logline && (
             <p style={{ fontStyle: "italic", fontSize: 23, lineHeight: 1.4, margin: "8px 0 0", maxWidth: "40ch" }}>

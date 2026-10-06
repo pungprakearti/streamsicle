@@ -4,6 +4,7 @@ import { TMDB_PROVIDER_IDS, SERVICES } from "@/lib/constants";
 import { TitleType, TitleStatus } from "@prisma/client";
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from "fs";
 import { join } from "path";
+import { ProgressBar } from "@/lib/progress";
 
 const DISCOVERY_PATH = join(process.cwd(), "data", "discovery.json");
 
@@ -22,15 +23,18 @@ export interface DiscoveryData {
 async function discoverAllPages(
   fetcher: (page: number) => Promise<{ total_pages: number; results: { id: number }[] }>,
   maxPages = 500,
+  onPage?: (page: number, totalPages: number) => void,
 ): Promise<number[]> {
   const ids: Set<number> = new Set();
   const first = await fetcher(1);
   for (const r of first.results) ids.add(r.id);
   const pages = Math.min(first.total_pages, maxPages);
+  onPage?.(1, pages);
 
   for (let page = 2; page <= pages; page++) {
     const res = await fetcher(page);
     for (const r of res.results) ids.add(r.id);
+    onPage?.(page, pages);
   }
   return [...ids];
 }
@@ -111,16 +115,37 @@ export async function discover(): Promise<DiscoveryData> {
   const movieIds = new Set<number>();
   const tvIds = new Set<number>();
 
-  for (const [slug, providerId] of Object.entries(providerIds)) {
-    console.log(`  Discovering movies on ${slug}...`);
-    const movies = await discoverAllPages((page) => tmdb.discoverMovies(providerId, page));
-    for (const id of movies) movieIds.add(id);
-    console.log(`    ${movies.length} movies (${movieIds.size} unique total)`);
+  const services = Object.entries(providerIds);
+  const progress = new ProgressBar({ label: "Discovering", total: services.length * 2 });
+  progress.start();
+  let tasksDone = 0;
 
-    console.log(`  Discovering TV on ${slug}...`);
-    const tv = await discoverAllPages((page) => tmdb.discoverTv(providerId, page));
+  for (const [slug, providerId] of services) {
+    progress.log(`  Discovering movies on ${slug}...`);
+    const movies = await discoverAllPages(
+      (page) => tmdb.discoverMovies(providerId, page),
+      500,
+      (page, totalPages) => {
+        progress.update(tasksDone + page / totalPages);
+      },
+    );
+    for (const id of movies) movieIds.add(id);
+    tasksDone++;
+    progress.update(tasksDone);
+    progress.log(`    ${movies.length} movies (${movieIds.size} unique total)`);
+
+    progress.log(`  Discovering TV on ${slug}...`);
+    const tv = await discoverAllPages(
+      (page) => tmdb.discoverTv(providerId, page),
+      500,
+      (page, totalPages) => {
+        progress.update(tasksDone + page / totalPages);
+      },
+    );
     for (const id of tv) tvIds.add(id);
-    console.log(`    ${tv.length} shows (${tvIds.size} unique total)`);
+    tasksDone++;
+    progress.update(tasksDone);
+    progress.log(`    ${tv.length} shows (${tvIds.size} unique total)`);
   }
 
   // Preserve lastPulledAt from previous discovery so incremental pull keeps working
@@ -138,8 +163,7 @@ export async function discover(): Promise<DiscoveryData> {
   }
   writeFileSync(DISCOVERY_PATH, JSON.stringify(data, null, 2));
 
-  console.log(`Discovery complete: ${movieIds.size} movies, ${tvIds.size} TV shows`);
-  console.log(`Saved to data/discovery.json`);
+  progress.stop(`Discovery complete: ${movieIds.size} movies, ${tvIds.size} TV shows\nSaved to data/discovery.json`);
 
   return data;
 }
@@ -483,22 +507,9 @@ export async function pull(options: PullOptions = {}) {
   let skipped = 0;
   let noService = 0;
   const errors: string[] = [];
-  const syncStart = Date.now();
 
-  const ticker = setInterval(() => {
-    const elapsed = ((Date.now() - syncStart) / 1000).toFixed(0);
-    const processed = synced + skipped + noService + errors.length;
-    const pct = allIds.length > 0 ? ((processed / allIds.length) * 100).toFixed(1) : "0";
-    const rate = processed > 0 ? (processed / ((Date.now() - syncStart) / 1000)).toFixed(1) : "0";
-    const remaining = processed > 0
-      ? Math.round((allIds.length - processed) / (processed / ((Date.now() - syncStart) / 1000)))
-      : "?";
-    const mins = Math.floor(Number(remaining) / 60);
-    const secs = Number(remaining) % 60;
-    console.log(
-      `  [${elapsed}s] ${processed}/${allIds.length} (${pct}%) | +${synced} synced, ${skipped} unchanged, ${noService} no svc, ${errors.length} err | ${rate}/s | ~${mins}m${secs}s left`
-    );
-  }, 10_000);
+  const progress = new ProgressBar({ label: "Pulling titles", total: allIds.length });
+  progress.start();
 
   for (const entry of allIds) {
     try {
@@ -511,11 +522,11 @@ export async function pull(options: PullOptions = {}) {
     } catch (e) {
       errors.push(`${entry.type}/${entry.id}: ${e instanceof Error ? e.message : String(e)}`);
     }
+    progress.increment();
   }
 
-  clearInterval(ticker);
-
-  const totalSeconds = ((Date.now() - syncStart) / 1000).toFixed(1);
+  const totalSeconds = progress.getElapsed().toFixed(1);
+  progress.stop(`Pull complete: +${synced} synced, ${skipped} unchanged, ${noService} no svc, ${errors.length} errors`);
 
   data.lastPulledAt = new Date().toISOString();
   saveDiscovery(data);
