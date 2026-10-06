@@ -74,12 +74,32 @@ export class ProgressBar {
     const barWidth = Math.max(10, cols - overhead);
     const filled = Math.round(barWidth * pct);
     const empty = barWidth - filled;
-    const bar = `${prefix}[${"█".repeat(filled)}${"░".repeat(empty)}]${stats}`;
+    const rainbow = rainbowFill(filled);
+    const bar = `${prefix}[${rainbow}\x1b[0m${"░".repeat(empty)}]${stats}`;
 
     readline.cursorTo(process.stdout, 0, 0);
     readline.clearLine(process.stdout, 0);
     process.stdout.write(bar);
   }
+}
+
+const RAINBOW = [
+  "\x1b[38;5;196m", // red
+  "\x1b[38;5;208m", // orange
+  "\x1b[38;5;226m", // yellow
+  "\x1b[38;5;46m",  // green
+  "\x1b[38;5;33m",  // blue
+  "\x1b[38;5;129m", // purple
+  "\x1b[38;5;201m", // pink
+];
+
+function rainbowFill(length: number): string {
+  if (length === 0) return "";
+  let out = "";
+  for (let i = 0; i < length; i++) {
+    out += RAINBOW[i % RAINBOW.length] + "█";
+  }
+  return out;
 }
 
 function formatTime(seconds: number): string {
