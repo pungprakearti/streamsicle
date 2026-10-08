@@ -449,10 +449,77 @@ async function fetchChangedIds(
 export interface PullOptions {
   limit?: number;
   full?: boolean;
+  resume?: boolean;
+  chunkSize?: number;
 }
+
+const CHUNK_SIZE = 500;
+const CONCURRENCY = 8;
 
 function saveDiscovery(data: DiscoveryData) {
   writeFileSync(DISCOVERY_PATH, JSON.stringify(data, null, 2));
+}
+
+async function findResumableRun() {
+  return prisma.syncRun.findFirst({
+    where: { status: "running" },
+    include: { chunks: { orderBy: { index: "asc" } } },
+    orderBy: { startedAt: "desc" },
+  });
+}
+
+async function processChunk(
+  chunk: { id: string; ids: string },
+  progress: ProgressBar,
+  globalOffset: number,
+) {
+  const entries: { type: "movie" | "tv"; id: number }[] = JSON.parse(chunk.ids);
+  let synced = 0;
+  let skipped = 0;
+  let noService = 0;
+  const errors: string[] = [];
+
+  await prisma.syncChunk.update({
+    where: { id: chunk.id },
+    data: { status: "running", startedAt: new Date() },
+  });
+
+  const queue = [...entries];
+  let idx = 0;
+
+  async function worker() {
+    while (idx < queue.length) {
+      const i = idx++;
+      const entry = queue[i];
+      try {
+        const result = entry.type === "movie"
+          ? await upsertMovie(entry.id)
+          : await upsertTvShow(entry.id);
+        if (result === "synced") synced++;
+        else if (result === "skipped") skipped++;
+        else noService++;
+      } catch (e) {
+        errors.push(`${entry.type}/${entry.id}: ${e instanceof Error ? e.message : String(e)}`);
+      }
+      progress.increment();
+    }
+  }
+
+  await Promise.all(Array.from({ length: CONCURRENCY }, () => worker()));
+
+  await prisma.syncChunk.update({
+    where: { id: chunk.id },
+    data: {
+      status: "completed",
+      synced,
+      skipped,
+      noService,
+      errors,
+      finishedAt: new Date(),
+    },
+  });
+
+  return { synced, skipped, noService, errors };
 }
 
 export async function pull(options: PullOptions = {}) {
@@ -465,6 +532,18 @@ export async function pull(options: PullOptions = {}) {
   const hoursAgo = (age / 3600_000).toFixed(1);
   console.log(`Using discovery from ${data.discoveredAt} (${hoursAgo}h ago)`);
   console.log(`  ${data.movies.length} movies, ${data.tv.length} TV shows`);
+
+  // Check for a resumable run
+  const existingRun = await findResumableRun();
+  if (existingRun && !options.full) {
+    return resumePull(existingRun, data);
+  }
+  if (existingRun && options.full) {
+    await prisma.syncRun.update({
+      where: { id: existingRun.id },
+      data: { status: "failed", finishedAt: new Date() },
+    });
+  }
 
   // If lastPulledAt is missing but DB already has titles, recover it from the DB
   if (!data.lastPulledAt && !options.full) {
@@ -503,30 +582,58 @@ export async function pull(options: PullOptions = {}) {
     allIds = allIds.slice(0, options.limit);
   }
 
+  const chunkSize = options.chunkSize || CHUNK_SIZE;
+  const chunks: { type: "movie" | "tv"; id: number }[][] = [];
+  for (let i = 0; i < allIds.length; i += chunkSize) {
+    chunks.push(allIds.slice(i, i + chunkSize));
+  }
+
+  const run = await prisma.syncRun.create({
+    data: {
+      mode: canIncremental ? "incremental" : "full",
+      totalTitles: allIds.length,
+      chunkSize,
+      chunks: {
+        create: chunks.map((ids, i) => ({
+          index: i,
+          ids: JSON.stringify(ids),
+        })),
+      },
+    },
+    include: { chunks: { orderBy: { index: "asc" } } },
+  });
+
+  console.log(`Created ${chunks.length} chunks of ~${chunkSize} titles`);
+
+  const progress = new ProgressBar({ label: "Pulling titles", total: allIds.length });
+  progress.start();
+
   let synced = 0;
   let skipped = 0;
   let noService = 0;
   const errors: string[] = [];
 
-  const progress = new ProgressBar({ label: "Pulling titles", total: allIds.length });
-  progress.start();
+  for (const chunk of run.chunks) {
+    progress.log(`  Chunk ${chunk.index + 1}/${chunks.length}`);
+    const result = await processChunk(chunk, progress, 0);
+    synced += result.synced;
+    skipped += result.skipped;
+    noService += result.noService;
+    errors.push(...result.errors);
 
-  for (const entry of allIds) {
-    try {
-      const result = entry.type === "movie"
-        ? await upsertMovie(entry.id)
-        : await upsertTvShow(entry.id);
-      if (result === "synced") synced++;
-      else if (result === "skipped") skipped++;
-      else noService++;
-    } catch (e) {
-      errors.push(`${entry.type}/${entry.id}: ${e instanceof Error ? e.message : String(e)}`);
-    }
-    progress.increment();
+    await prisma.syncRun.update({
+      where: { id: run.id },
+      data: { synced, skipped, noService, errorCount: errors.length },
+    });
   }
 
   const totalSeconds = progress.getElapsed().toFixed(1);
   progress.stop(`Pull complete: +${synced} synced, ${skipped} unchanged, ${noService} no svc, ${errors.length} errors`);
+
+  await prisma.syncRun.update({
+    where: { id: run.id },
+    data: { status: "completed", finishedAt: new Date() },
+  });
 
   data.lastPulledAt = new Date().toISOString();
   saveDiscovery(data);
@@ -541,5 +648,67 @@ export async function pull(options: PullOptions = {}) {
     movieCount: data.movies.length,
     tvCount: data.tv.length,
     incremental: !!changedMovieIds,
+    resumed: false,
+  };
+}
+
+async function resumePull(
+  run: Awaited<ReturnType<typeof findResumableRun>> & {},
+  data: DiscoveryData,
+) {
+  const completedChunks = run.chunks.filter((c) => c.status === "completed");
+  const pendingChunks = run.chunks.filter((c) => c.status !== "completed");
+  const completedCount = completedChunks.reduce(
+    (sum, c) => sum + (JSON.parse(c.ids) as unknown[]).length, 0,
+  );
+
+  console.log(`Resuming run from ${new Date(run.startedAt).toISOString()}`);
+  console.log(`  ${completedChunks.length}/${run.chunks.length} chunks done, ${pendingChunks.length} remaining`);
+
+  let synced = completedChunks.reduce((s, c) => s + c.synced, 0);
+  let skipped = completedChunks.reduce((s, c) => s + c.skipped, 0);
+  let noService = completedChunks.reduce((s, c) => s + c.noService, 0);
+  const errors: string[] = completedChunks.flatMap((c) => c.errors);
+
+  const progress = new ProgressBar({ label: "Pulling titles (resumed)", total: run.totalTitles });
+  progress.start();
+  progress.update(completedCount);
+
+  for (const chunk of pendingChunks) {
+    progress.log(`  Chunk ${chunk.index + 1}/${run.chunks.length} (resumed)`);
+    const result = await processChunk(chunk, progress, completedCount);
+    synced += result.synced;
+    skipped += result.skipped;
+    noService += result.noService;
+    errors.push(...result.errors);
+
+    await prisma.syncRun.update({
+      where: { id: run.id },
+      data: { synced, skipped, noService, errorCount: errors.length },
+    });
+  }
+
+  const totalSeconds = progress.getElapsed().toFixed(1);
+  progress.stop(`Pull complete (resumed): +${synced} synced, ${skipped} unchanged, ${noService} no svc, ${errors.length} errors`);
+
+  await prisma.syncRun.update({
+    where: { id: run.id },
+    data: { status: "completed", finishedAt: new Date() },
+  });
+
+  data.lastPulledAt = new Date().toISOString();
+  saveDiscovery(data);
+
+  return {
+    synced,
+    skipped,
+    noService,
+    errors,
+    totalSeconds,
+    total: run.totalTitles,
+    movieCount: data.movies.length,
+    tvCount: data.tv.length,
+    incremental: run.mode === "incremental",
+    resumed: true,
   };
 }

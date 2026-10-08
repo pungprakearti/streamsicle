@@ -127,6 +127,41 @@ model Episode {
   @@map("episodes")
 }
 
+model SyncRun {
+  id          String   @id @default(cuid())
+  mode        String   // "full" or "incremental"
+  status      String   @default("running") // "running", "completed", "failed"
+  totalTitles Int      @map("total_titles")
+  chunkSize   Int      @default(500) @map("chunk_size")
+  synced      Int      @default(0)
+  skipped     Int      @default(0)
+  noService   Int      @default(0) @map("no_service")
+  errorCount  Int      @default(0) @map("error_count")
+  startedAt   DateTime @default(now()) @map("started_at")
+  finishedAt  DateTime? @map("finished_at")
+  chunks      SyncChunk[]
+
+  @@map("sync_runs")
+}
+
+model SyncChunk {
+  id        String   @id @default(cuid())
+  runId     String   @map("run_id")
+  index     Int
+  status    String   @default("pending") // "pending", "running", "completed", "failed"
+  ids       String   // JSON array of {type, id} entries
+  synced    Int      @default(0)
+  skipped   Int      @default(0)
+  noService Int      @default(0) @map("no_service")
+  errors    String[] @default([])
+  startedAt DateTime? @map("started_at")
+  finishedAt DateTime? @map("finished_at")
+  run       SyncRun  @relation(fields: [runId], references: [id], onDelete: Cascade)
+
+  @@unique([runId, index])
+  @@map("sync_chunks")
+}
+
 enum TitleType {
   FILM
   SERIES

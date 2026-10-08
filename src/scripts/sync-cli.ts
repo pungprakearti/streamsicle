@@ -56,7 +56,7 @@ async function main() {
 
     const result = await pull({ limit, full });
 
-    console.log(`[${new Date().toISOString()}] Pull complete in ${formatTime(Number(result.totalSeconds))}:`);
+    console.log(`[${new Date().toISOString()}] Pull complete${result.resumed ? " (resumed)" : ""} in ${formatTime(Number(result.totalSeconds))}:`);
     console.log(`  Synced: ${result.synced}`);
     console.log(`  Skipped (unchanged): ${result.skipped}`);
     console.log(`  Skipped (not on any service): ${result.noService}`);
@@ -97,6 +97,7 @@ async function main() {
     console.log("Commands:");
     console.log("  discover          Fetch all title IDs from TMDB (run once a day)");
     console.log("  pull [--limit N] [--full]  Pull title data (incremental by default)");
+    console.log("                            Auto-resumes if a previous run was interrupted");
     console.log("  status            Show discovery cache info");
     process.exit(1);
   }

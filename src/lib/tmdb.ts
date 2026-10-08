@@ -1,7 +1,7 @@
 import { createHash } from "crypto";
 
 const BASE = "https://api.themoviedb.org/3";
-const RATE_LIMIT_MAX = 35;
+const RATE_LIMIT_MAX = 45;
 const RATE_LIMIT_WINDOW_MS = 10_000;
 
 const requestTimestamps: number[] = [];
