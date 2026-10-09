@@ -78,7 +78,9 @@ export default async function TitlePage({ params }: Props) {
           <div className="flex flex-wrap gap-4" style={{ fontSize: 15 }}>
             <span>{formatDate(title.releaseDate)}</span>
             {title.contentRating && <span>{title.contentRating}</span>}
-            {title.runtime && <span>{title.type === "FILM" ? `${title.runtime} min` : `${title.seasons?.length ?? 0} season${(title.seasons?.length ?? 0) === 1 ? "" : "s"}`}</span>}
+            {title.type === "FILM"
+              ? title.runtime && <span>{title.runtime} min</span>
+              : <span>{title.seasons?.length ?? 0} season{(title.seasons?.length ?? 0) === 1 ? "" : "s"}</span>}
             {title.rating && <span>{title.rating}/10</span>}
           </div>
           {title.logline && (
