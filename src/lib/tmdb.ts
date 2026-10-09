@@ -264,7 +264,11 @@ export function extractTvContentRating(data: TmdbContentRatings): string | null 
   return us?.rating || null;
 }
 
-export function computeSyncHash(detail: TmdbMovieDetail | TmdbTvDetail, providers: TmdbWatchProviders): string {
+export function computeSyncHash(
+  detail: TmdbMovieDetail | TmdbTvDetail,
+  providers: TmdbWatchProviders,
+  contentRating?: string | null,
+): string {
   const title = "title" in detail ? detail.title : detail.name;
   const payload = JSON.stringify({
     title,
@@ -275,6 +279,7 @@ export function computeSyncHash(detail: TmdbMovieDetail | TmdbTvDetail, provider
     backdrop_path: detail.backdrop_path,
     genres: detail.genres.map((g) => g.id).sort(),
     providers: (providers.results?.US?.flatrate || []).map((p) => p.provider_id).sort(),
+    contentRating: contentRating || null,
   });
   return createHash("sha256").update(payload).digest("hex").slice(0, 16);
 }

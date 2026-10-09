@@ -188,7 +188,8 @@ async function upsertMovie(tmdbId: number): Promise<"synced" | "skipped" | "no_s
 
   if (serviceSlugs.length === 0) return "no_service";
 
-  const hash = computeSyncHash(detail, providers);
+  const contentRating = extractMovieContentRating(releaseDates);
+  const hash = computeSyncHash(detail, providers, contentRating);
   const existing = await prisma.title.findUnique({
     where: { tmdbId },
     select: { syncHash: true },
@@ -205,7 +206,6 @@ async function upsertMovie(tmdbId: number): Promise<"synced" | "skipped" | "no_s
   }
 
   const director = credits.crew.find((c) => c.job === "Director");
-  const contentRating = extractMovieContentRating(releaseDates);
 
   const title = await prisma.title.upsert({
     where: { tmdbId },
@@ -297,7 +297,8 @@ async function upsertTvShow(tmdbId: number): Promise<"synced" | "skipped" | "no_
 
   if (serviceSlugs.length === 0) return "no_service";
 
-  const hash = computeSyncHash(detail, providers);
+  const contentRating = extractTvContentRating(contentRatings);
+  const hash = computeSyncHash(detail, providers, contentRating);
   const existing = await prisma.title.findUnique({
     where: { tmdbId },
     select: { syncHash: true },
@@ -317,7 +318,6 @@ async function upsertTvShow(tmdbId: number): Promise<"synced" | "skipped" | "no_
   const avgRuntime = detail.episode_run_time?.length
     ? Math.round(detail.episode_run_time.reduce((a, b) => a + b, 0) / detail.episode_run_time.length)
     : null;
-  const contentRating = extractTvContentRating(contentRatings);
 
   const title = await prisma.title.upsert({
     where: { tmdbId },
