@@ -96,7 +96,11 @@ async function main() {
     console.log("");
     console.log("Commands:");
     console.log("  discover          Fetch all title IDs from TMDB (run once a day)");
-    console.log("  pull [--limit N] [--full]  Pull title data (incremental by default)");
+    console.log("  pull [--limit N] [--full]  Pull title data from the latest discovery");
+    console.log("                            Only pulls titles found in the last discover run");
+    console.log("                            Incremental by default - uses TMDB changes API to");
+    console.log("                            skip titles unchanged since the last pull");
+    console.log("                            Use --full to re-pull all discovered titles");
     console.log("                            Auto-resumes if a previous run was interrupted");
     console.log("  status            Show discovery cache info");
     process.exit(1);
