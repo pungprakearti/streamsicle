@@ -2,12 +2,11 @@
 
 import { MagnifyingGlass, X } from "@phosphor-icons/react";
 import Form from "next/form";
-import { useRef, useState, useEffect, useCallback } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
+import { useRef, useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 
 export function SearchBar() {
   const searchParams = useSearchParams();
-  const router = useRouter();
   const urlQuery = searchParams.get("q") ?? "";
   const inputRef = useRef<HTMLInputElement>(null);
   const [query, setQuery] = useState(urlQuery);
@@ -15,12 +14,6 @@ export function SearchBar() {
   useEffect(() => {
     setQuery(urlQuery);
   }, [urlQuery]);
-
-  const handleClear = useCallback((e: React.FormEvent) => {
-    e.preventDefault();
-    setQuery("");
-    router.push("/home");
-  }, [router]);
 
   return (
     <div className="relative" style={{ width: "min(420px, 100%)" }}>
@@ -44,8 +37,8 @@ export function SearchBar() {
         />
       </Form>
       {query && (
-        <form
-          onSubmit={handleClear}
+        <Form
+          action="/home"
           className="absolute right-2 top-1/2 -translate-y-1/2"
           style={{ margin: 0 }}
         >
@@ -66,7 +59,7 @@ export function SearchBar() {
           >
             <X size={14} weight="bold" />
           </button>
-        </form>
+        </Form>
       )}
     </div>
   );
