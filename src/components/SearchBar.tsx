@@ -2,7 +2,7 @@
 
 import { MagnifyingGlass, X } from "@phosphor-icons/react";
 import Form from "next/form";
-import { useRef, useState, useEffect } from "react";
+import { useRef, useState, useEffect, useCallback } from "react";
 import { useSearchParams } from "next/navigation";
 
 export function SearchBar() {
@@ -15,17 +15,21 @@ export function SearchBar() {
     setQuery(urlQuery);
   }, [urlQuery]);
 
-  const handleClear = (e: React.SyntheticEvent) => {
-    e.preventDefault();
+  const clearQuery = useCallback(() => {
     setQuery("");
-    if (inputRef.current) {
-      inputRef.current.value = "";
-      inputRef.current.focus();
-    }
-  };
+    inputRef.current?.focus();
+  }, []);
 
   return (
-    <Form action="/search" className="relative" style={{ width: "min(420px, 100%)" }}>
+    <Form
+      action="/search"
+      className="relative"
+      style={{ width: "min(420px, 100%)" }}
+      onReset={(e) => {
+        e.preventDefault();
+        clearQuery();
+      }}
+    >
       <MagnifyingGlass
         size={18}
         weight="duotone"
@@ -44,24 +48,24 @@ export function SearchBar() {
         style={{ paddingLeft: 36, paddingRight: query ? 36 : 12, minHeight: 44, fontSize: 15 }}
       />
       {query && (
-        <a
-          href="#"
-          role="button"
-          onClick={handleClear}
-          onTouchEnd={handleClear}
+        <button
+          type="reset"
           aria-label="Clear search"
-          className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center justify-center no-underline"
+          className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center justify-center"
           style={{
-            width: 24,
-            height: 24,
+            width: 36,
+            height: 36,
             borderRadius: "50%",
             background: "var(--color-neutral-300)",
             color: "var(--color-neutral-800)",
+            border: "none",
             cursor: "pointer",
+            padding: 0,
+            WebkitTapHighlightColor: "transparent",
           }}
         >
           <X size={14} weight="bold" />
-        </a>
+        </button>
       )}
     </Form>
   );
