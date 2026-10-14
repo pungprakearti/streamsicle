@@ -26,8 +26,8 @@ export default async function WatchlistPage() {
 
       {watchlist.length > 0 ? (
         <div
-          className="grid gap-8"
-          style={{ gridTemplateColumns: "repeat(auto-fill, minmax(170px, 1fr))", marginTop: 32 }}
+          className="grid gap-4 sm:gap-8 title-grid"
+          style={{ marginTop: 32 }}
         >
           {watchlist.map((w, i) => (
             <div key={w.id} className="flex flex-col gap-2">

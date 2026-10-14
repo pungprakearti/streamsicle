@@ -1,4 +1,4 @@
-export const APP_VERSION = "1.0.16";
+export const APP_VERSION = "1.0.17";
 
 export const SERVICES = [
   { slug: "netflix", name: "Netflix" },
