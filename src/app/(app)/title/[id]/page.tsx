@@ -7,6 +7,8 @@ import { TMDB_IMAGE_BASE } from "@/lib/constants";
 import { PosterCard } from "@/components/PosterCard";
 import { WatchlistButton } from "@/components/WatchlistButton";
 import { ArrowLeft } from "@phosphor-icons/react/dist/ssr";
+import { Availability } from "@prisma/client";
+import { formatServices } from "@/lib/format";
 
 function formatDate(d: Date | null) {
   if (!d) return "";
@@ -94,9 +96,13 @@ export default async function TitlePage({ params }: Props) {
             </p>
           )}
           <div className="flex flex-wrap gap-3 items-center" style={{ marginTop: 12 }}>
-            {!isUpcoming && title.services.length > 0 && (
-              <span className="btn btn-primary">Watch on {title.services[0].service.name}</span>
-            )}
+            {!isUpcoming && title.services.length > 0 && (() => {
+              const first = title.services[0];
+              const verb = first.availability === Availability.STREAM ? "Watch on"
+                : first.availability === Availability.RENT ? "Rent on"
+                : "Buy on";
+              return <span className="btn btn-primary">{verb} {first.service.name}</span>;
+            })()}
             <WatchlistButton titleId={title.id} isOnList={isOnList} variant="inline" />
           </div>
         </div>
@@ -195,17 +201,25 @@ export default async function TitlePage({ params }: Props) {
             {isUpcoming ? "Arriving on" : "Where to watch"}
           </h3>
           <div className="flex flex-col gap-4">
-            {title.services.map((s) => (
-              <div key={s.serviceId} className="flex justify-between items-center gap-3">
-                <span className="flex flex-col gap-0.5">
-                  <span className="font-semibold" style={{ fontSize: 20 }}>{s.service.name}</span>
-                  <span style={{ fontSize: 13, fontStyle: "italic", color: "var(--color-neutral-700)" }}>
-                    {isUpcoming ? `Arrives ${formatDate(title.releaseDate)}` : "Included with subscription"}
+            {title.services.map((s) => {
+              const availLabel = s.availability === Availability.STREAM
+                ? (isUpcoming ? `Arrives ${formatDate(title.releaseDate)}` : "Included with subscription")
+                : s.availability === Availability.RENT ? "Available to rent"
+                : "Available to buy";
+              const btnLabel = s.availability === Availability.STREAM ? "Watch"
+                : s.availability === Availability.RENT ? "Rent" : "Buy";
+              return (
+                <div key={`${s.serviceId}-${s.availability}`} className="flex justify-between items-center gap-3">
+                  <span className="flex flex-col gap-0.5">
+                    <span className="font-semibold" style={{ fontSize: 20 }}>{s.service.name}</span>
+                    <span style={{ fontSize: 13, fontStyle: "italic", color: "var(--color-neutral-700)" }}>
+                      {availLabel}
+                    </span>
                   </span>
-                </span>
-                {!isUpcoming && <span className="btn btn-secondary">Watch</span>}
-              </div>
-            ))}
+                  {!isUpcoming && <span className="btn btn-secondary">{btnLabel}</span>}
+                </div>
+              );
+            })}
             {title.services.length === 0 && (
               <p style={{ fontStyle: "italic", color: "var(--color-neutral-700)" }}>
                 Not currently available on any tracked service.
@@ -228,7 +242,7 @@ export default async function TitlePage({ params }: Props) {
                 year={t.releaseDate?.getFullYear() ?? null}
                 posterPath={t.posterPath}
                 contentRating={t.contentRating}
-                serviceNames={t.services.map((s) => s.service.name).join(" · ")}
+                serviceNames={formatServices(t.services)}
                 isOnWatchlist={profileId ? t.watchlist.some((w) => w.profileId === profileId) : false}
               />
             ))}

@@ -3,6 +3,7 @@ import { getFullWatchlist } from "@/actions/watchlist";
 import { PosterCard } from "@/components/PosterCard";
 import { EAGER_POSTER_COUNT } from "@/components/TitleGrid";
 import { ProfileAvatar } from "@/components/ProfilePicker";
+import { formatServices } from "@/lib/format";
 import { BookmarkSimple } from "@phosphor-icons/react/dist/ssr";
 
 function formatDate(d: Date) {
@@ -36,7 +37,7 @@ export default async function WatchlistPage() {
                 typeLabel={w.title.type === "FILM" ? "Film" : "Series"}
                 year={w.title.releaseDate?.getFullYear() ?? null}
                 posterPath={w.title.posterPath}
-                serviceNames={w.title.services.map((s) => s.service.name).join(" · ")}
+                serviceNames={formatServices(w.title.services)}
                 isOnWatchlist={true}
                 eager={i < EAGER_POSTER_COUNT}
               />

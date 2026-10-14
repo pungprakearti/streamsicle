@@ -67,6 +67,19 @@ export async function getTitleById(id: string) {
   });
 }
 
+const HERO_SAFE_RATINGS = ["G", "PG", "PG-13", "TV-Y", "TV-Y7", "TV-G", "TV-PG", "TV-14"];
+
+export async function getHeroTitle() {
+  return prisma.title.findFirst({
+    where: {
+      status: "NEW",
+      contentRating: { in: HERO_SAFE_RATINGS },
+    },
+    ...titleWithServices,
+    orderBy: { releaseDate: "desc" },
+  });
+}
+
 export async function getNewTitles() {
   return prisma.title.findMany({
     where: { status: "NEW" },

@@ -141,6 +141,8 @@ export interface TmdbWatchProviders {
   results: {
     US?: {
       flatrate?: { provider_id: number; provider_name: string }[];
+      rent?: { provider_id: number; provider_name: string }[];
+      buy?: { provider_id: number; provider_name: string }[];
     };
   };
 }
@@ -207,20 +209,20 @@ export const tmdb = {
       { watch_region: "US" },
     ),
 
-  discoverMovies: (providerId: number, page = 1) =>
+  discoverMovies: (providerId: number, page = 1, monetization = "flatrate") =>
     tmdbFetch<TmdbPageResult<TmdbMovie>>("/discover/movie", {
       with_watch_providers: String(providerId),
       watch_region: "US",
-      with_watch_monetization_types: "flatrate",
+      with_watch_monetization_types: monetization,
       sort_by: "popularity.desc",
       page: String(page),
     }),
 
-  discoverTv: (providerId: number, page = 1) =>
+  discoverTv: (providerId: number, page = 1, monetization = "flatrate") =>
     tmdbFetch<TmdbPageResult<TmdbTvShow>>("/discover/tv", {
       with_watch_providers: String(providerId),
       watch_region: "US",
-      with_watch_monetization_types: "flatrate",
+      with_watch_monetization_types: monetization,
       sort_by: "popularity.desc",
       page: String(page),
     }),
@@ -279,6 +281,8 @@ export function computeSyncHash(
     backdrop_path: detail.backdrop_path,
     genres: detail.genres.map((g) => g.id).sort(),
     providers: (providers.results?.US?.flatrate || []).map((p) => p.provider_id).sort(),
+    rentProviders: (providers.results?.US?.rent || []).map((p) => p.provider_id).sort(),
+    buyProviders: (providers.results?.US?.buy || []).map((p) => p.provider_id).sort(),
     contentRating: contentRating || null,
   });
   return createHash("sha256").update(payload).digest("hex").slice(0, 16);

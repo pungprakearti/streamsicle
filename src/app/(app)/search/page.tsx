@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { searchTitles } from "@/lib/queries";
 import { TMDB_IMAGE_BASE } from "@/lib/constants";
+import { formatServices } from "@/lib/format";
 
 type Props = {
   searchParams: Promise<{ q?: string }>;
@@ -37,7 +38,7 @@ export default async function SearchPage({ searchParams }: Props) {
               <th>Title</th>
               <th>Type</th>
               <th>Released</th>
-              <th>Streaming on</th>
+              <th>Available on</th>
             </tr>
           </thead>
           <tbody>
@@ -67,7 +68,7 @@ export default async function SearchPage({ searchParams }: Props) {
                 </td>
                 <td>{t.type === "FILM" ? "Film" : "Series"}</td>
                 <td style={{ whiteSpace: "nowrap" }}>{formatDate(t.releaseDate)}</td>
-                <td>{t.services.map((s) => s.service.name).join(", ")}</td>
+                <td>{formatServices(t.services)}</td>
               </tr>
             ))}
           </tbody>

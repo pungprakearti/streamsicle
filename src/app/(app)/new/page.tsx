@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { getNewTitles, getUpcomingTitles } from "@/lib/queries";
 import { TMDB_IMAGE_BASE } from "@/lib/constants";
+import { formatServices } from "@/lib/format";
 
 function formatDate(d: Date | null) {
   if (!d) return "";
@@ -57,7 +58,7 @@ export default async function NewPage() {
                         {t.title}
                       </span>
                       <span style={{ fontSize: 13, color: "var(--color-neutral-700)" }}>
-                        {t.type === "FILM" ? "Film" : "Series"} {t.genres.length > 0 ? `· ${t.genres.join(" / ")}` : ""} {t.services.map((s) => s.service.name).join(" · ")}
+                        {t.type === "FILM" ? "Film" : "Series"} {t.genres.length > 0 ? `· ${t.genres.join(" / ")}` : ""} {formatServices(t.services)}
                       </span>
                       <span style={{ fontSize: 13, color: "var(--color-accent-700)" }}>
                         {formatDate(t.releaseDate)}

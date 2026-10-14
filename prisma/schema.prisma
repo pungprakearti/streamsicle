@@ -56,12 +56,13 @@ model Title {
 }
 
 model TitleService {
-  titleId   String  @map("title_id")
-  serviceId String  @map("service_id")
-  title     Title   @relation(fields: [titleId], references: [id], onDelete: Cascade)
-  service   Service @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  titleId      String       @map("title_id")
+  serviceId    String       @map("service_id")
+  availability Availability @default(STREAM)
+  title        Title        @relation(fields: [titleId], references: [id], onDelete: Cascade)
+  service      Service      @relation(fields: [serviceId], references: [id], onDelete: Cascade)
 
-  @@id([titleId, serviceId])
+  @@id([titleId, serviceId, availability])
   @@map("title_services")
 }
 
@@ -171,4 +172,10 @@ enum TitleStatus {
   CATALOG
   NEW
   UPCOMING
+}
+
+enum Availability {
+  STREAM
+  RENT
+  BUY
 }

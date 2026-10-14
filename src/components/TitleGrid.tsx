@@ -3,6 +3,7 @@ import Link from "next/link";
 import { PosterCard } from "./PosterCard";
 import { InfiniteGrid } from "./InfiniteGrid";
 import { TMDB_IMAGE_BASE } from "@/lib/constants";
+import { formatServices } from "@/lib/format";
 
 // Enough to cover the first visible row on wide screens
 export const EAGER_POSTER_COUNT = 12;
@@ -18,7 +19,7 @@ type TitleItem = {
   tmdbPopularity: number;
   contentRating: string | null;
   status: "CATALOG" | "NEW" | "UPCOMING";
-  services: { service: { name: string } }[];
+  services: { service: { name: string }; availability: import("@prisma/client").Availability }[];
   watchlist: { profileId: string }[];
 };
 
@@ -73,7 +74,7 @@ export function TitleGrid({ titles, layout, profileId, showRank = false }: Props
                 <td style={{ whiteSpace: "nowrap" }}>
                   {t.releaseDate ? t.releaseDate.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : ""}
                 </td>
-                <td>{t.services.map((s) => s.service.name).join(", ")}</td>
+                <td>{formatServices(t.services)}</td>
                 {showRank && (
                   <td style={{ color: "var(--color-accent-2-700)", whiteSpace: "nowrap" }}>
                     No. {i + 1}
@@ -102,7 +103,7 @@ export function TitleGrid({ titles, layout, profileId, showRank = false }: Props
             year={t.releaseDate?.getFullYear() ?? null}
             posterPath={t.posterPath}
             contentRating={t.contentRating}
-            serviceNames={t.services.map((s) => s.service.name).join(" · ")}
+            serviceNames={formatServices(t.services)}
             rankLabel={showRank ? `No. ${i + 1}` : undefined}
             isOnWatchlist={profileId ? t.watchlist.some((w) => w.profileId === profileId) : false}
             eager={i < EAGER_POSTER_COUNT}

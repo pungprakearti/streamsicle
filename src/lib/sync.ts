@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/db";
 import { tmdb, computeSyncHash, extractMovieContentRating, extractTvContentRating } from "@/lib/tmdb";
 import { TMDB_PROVIDER_IDS, SERVICES } from "@/lib/constants";
-import { TitleType, TitleStatus } from "@prisma/client";
+import { TitleType, TitleStatus, Availability } from "@prisma/client";
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from "fs";
 import { join } from "path";
 import { ProgressBar } from "@/lib/progress";
@@ -11,6 +11,11 @@ const DISCOVERY_PATH = join(process.cwd(), "data", "discovery.json");
 const PROVIDER_SLUG = Object.fromEntries(
   Object.entries(TMDB_PROVIDER_IDS).map(([slug, id]) => [id, slug])
 );
+
+const RENT_BUY_PROVIDER_SLUG: Record<number, string> = {
+  10: "prime",    // Amazon Video (rent/buy)
+  2: "apple",     // Apple TV Store (rent/buy)
+};
 
 export interface DiscoveryData {
   discoveredAt: string;
@@ -116,36 +121,39 @@ export async function discover(): Promise<DiscoveryData> {
   const tvIds = new Set<number>();
 
   const services = Object.entries(providerIds);
-  const progress = new ProgressBar({ label: "Discovering", total: services.length * 2 });
+  const monetizationTypes = ["flatrate", "rent", "buy"];
+  const progress = new ProgressBar({ label: "Discovering", total: services.length * 2 * monetizationTypes.length });
   progress.start();
   let tasksDone = 0;
 
   for (const [slug, providerId] of services) {
-    progress.log(`  Discovering movies on ${slug}...`);
-    const movies = await discoverAllPages(
-      (page) => tmdb.discoverMovies(providerId, page),
-      500,
-      (page, totalPages) => {
-        progress.update(tasksDone + page / totalPages);
-      },
-    );
-    for (const id of movies) movieIds.add(id);
-    tasksDone++;
-    progress.update(tasksDone);
-    progress.log(`    ${movies.length} movies (${movieIds.size} unique total)`);
+    for (const monetization of monetizationTypes) {
+      progress.log(`  Discovering movies on ${slug} (${monetization})...`);
+      const movies = await discoverAllPages(
+        (page) => tmdb.discoverMovies(providerId, page, monetization),
+        500,
+        (page, totalPages) => {
+          progress.update(tasksDone + page / totalPages);
+        },
+      );
+      for (const id of movies) movieIds.add(id);
+      tasksDone++;
+      progress.update(tasksDone);
+      progress.log(`    ${movies.length} movies (${movieIds.size} unique total)`);
 
-    progress.log(`  Discovering TV on ${slug}...`);
-    const tv = await discoverAllPages(
-      (page) => tmdb.discoverTv(providerId, page),
-      500,
-      (page, totalPages) => {
-        progress.update(tasksDone + page / totalPages);
-      },
-    );
-    for (const id of tv) tvIds.add(id);
-    tasksDone++;
-    progress.update(tasksDone);
-    progress.log(`    ${tv.length} shows (${tvIds.size} unique total)`);
+      progress.log(`  Discovering TV on ${slug} (${monetization})...`);
+      const tv = await discoverAllPages(
+        (page) => tmdb.discoverTv(providerId, page, monetization),
+        500,
+        (page, totalPages) => {
+          progress.update(tasksDone + page / totalPages);
+        },
+      );
+      for (const id of tv) tvIds.add(id);
+      tasksDone++;
+      progress.update(tasksDone);
+      progress.log(`    ${tv.length} shows (${tvIds.size} unique total)`);
+    }
   }
 
   // Preserve lastPulledAt from previous discovery so incremental pull keeps working
@@ -173,6 +181,32 @@ export function loadDiscovery(): DiscoveryData | null {
   return JSON.parse(readFileSync(DISCOVERY_PATH, "utf-8"));
 }
 
+function resolveServiceLinks(providers: import("@/lib/tmdb").TmdbWatchProviders) {
+  const us = providers.results?.US;
+  if (!us) return [];
+
+  const links: { slug: string; availability: Availability }[] = [];
+  const seen = new Set<string>();
+
+  for (const [type, avail] of [
+    ["flatrate", Availability.STREAM],
+    ["rent", Availability.RENT],
+    ["buy", Availability.BUY],
+  ] as const) {
+    const list = us[type] || [];
+    for (const p of list) {
+      const slug = PROVIDER_SLUG[p.provider_id] || RENT_BUY_PROVIDER_SLUG[p.provider_id];
+      if (!slug) continue;
+      const key = `${slug}:${avail}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      links.push({ slug, availability: avail });
+    }
+  }
+
+  return links;
+}
+
 async function upsertMovie(tmdbId: number): Promise<"synced" | "skipped" | "no_service"> {
   const [detail, credits, providers, releaseDates] = await Promise.all([
     tmdb.movieDetail(tmdbId),
@@ -181,12 +215,9 @@ async function upsertMovie(tmdbId: number): Promise<"synced" | "skipped" | "no_s
     tmdb.movieReleaseDates(tmdbId),
   ]);
 
-  const flatrate = providers.results?.US?.flatrate || [];
-  const serviceSlugs = flatrate
-    .map((p) => PROVIDER_SLUG[p.provider_id])
-    .filter(Boolean);
+  const serviceLinks = resolveServiceLinks(providers);
 
-  if (serviceSlugs.length === 0) return "no_service";
+  if (serviceLinks.length === 0) return "no_service";
 
   const contentRating = extractMovieContentRating(releaseDates);
   const hash = computeSyncHash(detail, providers, contentRating);
@@ -243,12 +274,16 @@ async function upsertMovie(tmdbId: number): Promise<"synced" | "skipped" | "no_s
     },
   });
 
+  const serviceSlugs = [...new Set(serviceLinks.map((l) => l.slug))];
   const services = await prisma.service.findMany({
     where: { slug: { in: serviceSlugs } },
   });
+  const slugToId = Object.fromEntries(services.map((s) => [s.slug, s.id]));
   await prisma.titleService.deleteMany({ where: { titleId: title.id } });
   await prisma.titleService.createMany({
-    data: services.map((s) => ({ titleId: title.id, serviceId: s.id })),
+    data: serviceLinks
+      .filter((l) => slugToId[l.slug])
+      .map((l) => ({ titleId: title.id, serviceId: slugToId[l.slug], availability: l.availability })),
     skipDuplicates: true,
   });
 
@@ -290,12 +325,9 @@ async function upsertTvShow(tmdbId: number): Promise<"synced" | "skipped" | "no_
     tmdb.tvContentRatings(tmdbId),
   ]);
 
-  const flatrate = providers.results?.US?.flatrate || [];
-  const serviceSlugs = flatrate
-    .map((p) => PROVIDER_SLUG[p.provider_id])
-    .filter(Boolean);
+  const serviceLinks = resolveServiceLinks(providers);
 
-  if (serviceSlugs.length === 0) return "no_service";
+  if (serviceLinks.length === 0) return "no_service";
 
   const contentRating = extractTvContentRating(contentRatings);
   const hash = computeSyncHash(detail, providers, contentRating);
@@ -355,12 +387,16 @@ async function upsertTvShow(tmdbId: number): Promise<"synced" | "skipped" | "no_
     },
   });
 
+  const serviceSlugs = [...new Set(serviceLinks.map((l) => l.slug))];
   const services = await prisma.service.findMany({
     where: { slug: { in: serviceSlugs } },
   });
+  const slugToId = Object.fromEntries(services.map((s) => [s.slug, s.id]));
   await prisma.titleService.deleteMany({ where: { titleId: title.id } });
   await prisma.titleService.createMany({
-    data: services.map((s) => ({ titleId: title.id, serviceId: s.id })),
+    data: serviceLinks
+      .filter((l) => slugToId[l.slug])
+      .map((l) => ({ titleId: title.id, serviceId: slugToId[l.slug], availability: l.availability })),
     skipDuplicates: true,
   });
 

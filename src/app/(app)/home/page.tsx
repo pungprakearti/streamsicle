@@ -1,7 +1,8 @@
 import Image from "next/image";
 import Link from "next/link";
-import { getNewTitles, getUpcomingTitles, getPopularTitles, getServiceCounts } from "@/lib/queries";
+import { getHeroTitle, getNewTitles, getUpcomingTitles, getPopularTitles, getServiceCounts } from "@/lib/queries";
 import { TMDB_IMAGE_BASE } from "@/lib/constants";
+import { formatServices } from "@/lib/format";
 
 function formatDate(d: Date | null) {
   if (!d) return "";
@@ -9,15 +10,16 @@ function formatDate(d: Date | null) {
 }
 
 export default async function HomePage() {
-  const [newTitles, upcoming, popular, serviceCounts] = await Promise.all([
+  const [hero, newTitles, upcoming, popular, serviceCounts] = await Promise.all([
+    getHeroTitle(),
     getNewTitles(),
     getUpcomingTitles(),
     getPopularTitles(10),
     getServiceCounts(),
   ]);
 
-  const lead = newTitles[0];
-  const alsoNew = newTitles.slice(1, 6);
+  const lead = hero;
+  const alsoNew = newTitles.filter((t) => t.id !== hero?.id).slice(0, 5);
 
   return (
     <>
@@ -104,7 +106,7 @@ export default async function HomePage() {
                         {t.title}
                       </span>
                       <span style={{ fontSize: 13, color: "var(--color-neutral-700)" }}>
-                        {t.type === "FILM" ? "Film" : "Series"} {t.services.map((s) => s.service.name).join(" · ")} {t.releaseDate ? `· ${formatDate(t.releaseDate)}` : ""}
+                        {t.type === "FILM" ? "Film" : "Series"} {formatServices(t.services)} {t.releaseDate ? `· ${formatDate(t.releaseDate)}` : ""}
                       </span>
                     </Link>
                   </div>
@@ -150,7 +152,7 @@ export default async function HomePage() {
                         {t.title}
                       </span>
                       <span style={{ fontSize: 13, color: "var(--color-neutral-700)" }}>
-                        {t.type === "FILM" ? "Film" : "Series"} {t.services.map((s) => s.service.name).join(" · ")}
+                        {t.type === "FILM" ? "Film" : "Series"} {formatServices(t.services)}
                       </span>
                     </span>
                   </Link>
@@ -187,7 +189,7 @@ export default async function HomePage() {
                         {t.title}
                       </span>
                       <span style={{ fontSize: 13, color: "var(--color-neutral-700)" }}>
-                        {t.type === "FILM" ? "Film" : "Series"} {t.services.map((s) => s.service.name).join(" · ")}
+                        {t.type === "FILM" ? "Film" : "Series"} {formatServices(t.services)}
                       </span>
                     </span>
                   </Link>
