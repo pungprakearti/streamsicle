@@ -5,7 +5,6 @@ import { AVATARS, getAvatarStyle } from "@/lib/constants";
 import type { AvatarId } from "@/lib/constants";
 import type { Profile } from "@prisma/client";
 import { createProfile, updateProfile, deleteProfile, switchProfile } from "@/actions/profiles";
-import { useRouter } from "next/navigation";
 import type { IconWeight } from "@phosphor-icons/react";
 import {
   IceCream, Popcorn, FilmSlate, Ghost, RocketLaunch, Crown,
@@ -50,18 +49,9 @@ export function ProfilePicker({ profiles: initialProfiles }: Props) {
   const [draftName, setDraftName] = useState("");
   const [draftAvatar, setDraftAvatar] = useState<AvatarId>(AVATARS[0].id);
   const [isPending, startTransition] = useTransition();
-  const router = useRouter();
 
   const isFormOpen = creating || !!editingId;
 
-  const handlePick = (profileId: string) => {
-    if (managing) return;
-    startTransition(async () => {
-      await switchProfile(profileId);
-      router.push("/home");
-      router.refresh();
-    });
-  };
 
   const handleCreate = () => {
     if (!draftName.trim()) return;
@@ -71,11 +61,7 @@ export function ProfilePicker({ profiles: initialProfiles }: Props) {
         setProfiles((prev) => prev.map((p) => (p.id === editingId ? updated : p)));
         setEditingId(null);
       } else {
-        const created = await createProfile(draftName.trim(), draftAvatar);
-        setProfiles((prev) => [...prev, created]);
-        setCreating(false);
-        router.push("/home");
-        router.refresh();
+        await createProfile(draftName.trim(), draftAvatar);
       }
       setDraftName("");
     });
@@ -112,20 +98,23 @@ export function ProfilePicker({ profiles: initialProfiles }: Props) {
               const style = getAvatarStyle(avatar?.hue ?? 0);
               return (
                 <div key={p.id} className="flex flex-col items-center gap-2 relative">
-                  <button
-                    onClick={() => handlePick(p.id)}
-                    disabled={isPending}
-                    className="border-0 bg-transparent p-0 cursor-pointer flex flex-col items-center gap-3 text-inherit hover:text-[var(--color-accent)]"
-                    style={{ font: "inherit" }}
-                  >
-                    <span
-                      className="profile-square rounded-xl grid place-items-center"
-                      style={{ background: style.bg, color: style.fg, boxShadow: "var(--shadow-md)" }}
+                  <form action={switchProfile}>
+                    <input type="hidden" name="profileId" value={p.id} />
+                    <button
+                      type="submit"
+                      disabled={managing || isPending}
+                      className="border-0 bg-transparent p-0 cursor-pointer flex flex-col items-center gap-3 text-inherit hover:text-[var(--color-accent)]"
+                      style={{ font: "inherit" }}
                     >
-                      <AvatarIcon avatarId={p.avatarId} size={124} />
-                    </span>
-                    <span className="profile-label">{p.name}</span>
-                  </button>
+                      <span
+                        className="profile-square rounded-xl grid place-items-center"
+                        style={{ background: style.bg, color: style.fg, boxShadow: "var(--shadow-md)" }}
+                      >
+                        <AvatarIcon avatarId={p.avatarId} size={124} />
+                      </span>
+                      <span className="profile-label">{p.name}</span>
+                    </button>
+                  </form>
                   {managing && (
                     <div className="flex gap-1">
                       <button className="btn btn-ghost" onClick={() => startEdit(p)} style={{ fontSize: 14 }}>

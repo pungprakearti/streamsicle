@@ -22,6 +22,12 @@ export async function toggleWatchlist(titleId: string) {
   return !existing;
 }
 
+export async function toggleWatchlistAction(formData: FormData) {
+  const titleId = formData.get("titleId") as string;
+  if (!titleId) return;
+  await toggleWatchlist(titleId);
+}
+
 export async function getWatchlistForProfile(profileId: string) {
   return prisma.watchlist.findMany({
     where: { profileId },

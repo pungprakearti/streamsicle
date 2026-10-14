@@ -1,9 +1,9 @@
 "use client";
 
-import { List, X } from "@phosphor-icons/react";
+import { List } from "@phosphor-icons/react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useRef } from "react";
 import { ProfileSwitcher } from "./ProfileSwitcher";
 
 type Props = {
@@ -22,39 +22,35 @@ const NAV_LINKS = [
 ];
 
 export function MobileNav({ watchCount, profileName, profileAvatarId, version }: Props) {
-  const [open, setOpen] = useState(false);
   const pathname = usePathname();
-  const [lastPathname, setLastPathname] = useState(pathname);
+  const detailsRef = useRef<HTMLDetailsElement>(null);
+  const lastPathname = useRef(pathname);
 
-  // Close the menu on navigation (adjusting state during render, not in an effect)
-  if (pathname !== lastPathname) {
-    setLastPathname(pathname);
-    setOpen(false);
-  }
+  useEffect(() => {
+    if (pathname !== lastPathname.current) {
+      lastPathname.current = pathname;
+      detailsRef.current?.removeAttribute("open");
+    }
+  }, [pathname]);
 
   return (
     <>
       <div className="mobile-header-row">
         <ProfileSwitcher name={profileName} avatarId={profileAvatarId} />
         <span className="mobile-version">v{version}</span>
-        <button
-          className="mobile-nav-toggle"
-          onClick={() => setOpen(!open)}
-          aria-label={open ? "Close menu" : "Open menu"}
-          aria-expanded={open}
-        >
-          {open ? <X size={24} weight="bold" /> : <List size={24} weight="bold" />}
-        </button>
+        <details ref={detailsRef} className="mobile-menu-details">
+          <summary className="mobile-nav-toggle" aria-label="Open menu">
+            <List size={24} weight="bold" />
+          </summary>
+          <nav className="mobile-nav-drawer">
+            {NAV_LINKS.map(({ href, label }) => (
+              <Link key={href} href={href}>
+                {label === "Watchlist" && watchCount > 0 ? `${label} (${watchCount})` : label}
+              </Link>
+            ))}
+          </nav>
+        </details>
       </div>
-      {open && (
-        <nav className="mobile-nav-drawer">
-          {NAV_LINKS.map(({ href, label }) => (
-            <Link key={href} href={href} onClick={() => setOpen(false)}>
-              {label === "Watchlist" && watchCount > 0 ? `${label} (${watchCount})` : label}
-            </Link>
-          ))}
-        </nav>
-      )}
     </>
   );
 }

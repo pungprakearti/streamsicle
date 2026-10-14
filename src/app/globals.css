@@ -272,6 +272,10 @@ nav.nav a[aria-current="page"] {
   color: var(--color-neutral-700);
   margin-left: auto;
 }
+.mobile-menu-details {
+  flex-shrink: 0;
+  position: relative;
+}
 .mobile-nav-toggle {
   display: flex;
   align-items: center;
@@ -284,6 +288,10 @@ nav.nav a[aria-current="page"] {
   color: var(--color-text);
   cursor: pointer;
   flex-shrink: 0;
+  list-style: none;
+}
+.mobile-nav-toggle::-webkit-details-marker {
+  display: none;
 }
 .mobile-nav-toggle:hover {
   background: var(--color-neutral-100);
@@ -292,12 +300,16 @@ nav.nav a[aria-current="page"] {
   display: flex;
   flex-direction: column;
   gap: 0;
-  margin-top: 12px;
-  margin-bottom: 16px;
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 8px;
+  width: max(200px, 50vw);
   background: var(--color-surface);
   border-radius: var(--radius-lg);
   padding: 8px 0;
-  box-shadow: var(--shadow-md);
+  box-shadow: var(--shadow-lg);
+  z-index: 100;
 }
 .mobile-nav-drawer a {
   display: block;

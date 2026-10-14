@@ -3,6 +3,7 @@
 import { cookies } from "next/headers";
 import { prisma } from "@/lib/db";
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 
 const PROFILE_COOKIE = "streamsicle-profile";
 
@@ -37,7 +38,7 @@ export async function createProfile(name: string, avatarId: string) {
     sameSite: "lax",
   });
   revalidatePath("/");
-  return profile;
+  redirect("/home");
 }
 
 export async function updateProfile(id: string, name: string, avatarId: string) {
@@ -59,7 +60,9 @@ export async function deleteProfile(id: string) {
   revalidatePath("/");
 }
 
-export async function switchProfile(id: string) {
+export async function switchProfile(formData: FormData) {
+  const id = formData.get("profileId") as string;
+  if (!id) return;
   const cookieStore = await cookies();
   cookieStore.set(PROFILE_COOKIE, id, {
     path: "/",
@@ -67,10 +70,12 @@ export async function switchProfile(id: string) {
     sameSite: "lax",
   });
   revalidatePath("/");
+  redirect("/home");
 }
 
 export async function clearProfile() {
   const cookieStore = await cookies();
   cookieStore.delete(PROFILE_COOKIE);
   revalidatePath("/");
+  redirect("/");
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import { MagnifyingGlass, X } from "@phosphor-icons/react";
+import Form from "next/form";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
@@ -8,26 +9,13 @@ export function SearchBar({ initialQuery = "" }: { initialQuery?: string }) {
   const [query, setQuery] = useState(initialQuery);
   const router = useRouter();
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const v = e.target.value;
-    setQuery(v);
-    if (v.trim()) {
-      router.push(`/search?q=${encodeURIComponent(v.trim())}`);
-    }
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter" && query.trim()) {
-      router.push(`/search?q=${encodeURIComponent(query.trim())}`);
-    }
-  };
-
   const handleClear = () => {
     setQuery("");
+    router.push("/search");
   };
 
   return (
-    <div className="relative" style={{ width: "min(420px, 100%)" }}>
+    <Form action="/search" className="relative" style={{ width: "min(420px, 100%)" }}>
       <MagnifyingGlass
         size={18}
         weight="duotone"
@@ -41,8 +29,7 @@ export function SearchBar({ initialQuery = "" }: { initialQuery?: string }) {
         className="input"
         placeholder="Search films, series, directors"
         value={query}
-        onChange={handleChange}
-        onKeyDown={handleKeyDown}
+        onChange={(e) => setQuery(e.target.value)}
         style={{ paddingLeft: 36, paddingRight: query ? 36 : 12, minHeight: 44, fontSize: 15 }}
       />
       {query && (
@@ -65,6 +52,6 @@ export function SearchBar({ initialQuery = "" }: { initialQuery?: string }) {
           <X size={14} weight="bold" />
         </button>
       )}
-    </div>
+    </Form>
   );
 }
