@@ -2,16 +2,25 @@
 
 import { MagnifyingGlass, X } from "@phosphor-icons/react";
 import Form from "next/form";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useRef, useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 
-export function SearchBar({ initialQuery = "" }: { initialQuery?: string }) {
-  const [query, setQuery] = useState(initialQuery);
-  const router = useRouter();
+export function SearchBar() {
+  const searchParams = useSearchParams();
+  const urlQuery = searchParams.get("q") ?? "";
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [query, setQuery] = useState(urlQuery);
+
+  useEffect(() => {
+    setQuery(urlQuery);
+  }, [urlQuery]);
 
   const handleClear = () => {
     setQuery("");
-    router.push("/search");
+    if (inputRef.current) {
+      inputRef.current.value = "";
+      inputRef.current.focus();
+    }
   };
 
   return (
@@ -23,6 +32,7 @@ export function SearchBar({ initialQuery = "" }: { initialQuery?: string }) {
         style={{ color: "var(--color-accent-700)" }}
       />
       <input
+        ref={inputRef}
         type="search"
         name="q"
         aria-label="Search"
