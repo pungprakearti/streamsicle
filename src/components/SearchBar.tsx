@@ -15,7 +15,8 @@ export function SearchBar() {
     setQuery(urlQuery);
   }, [urlQuery]);
 
-  const handleClear = () => {
+  const handleClear = (e: React.SyntheticEvent) => {
+    e.preventDefault();
     setQuery("");
     if (inputRef.current) {
       inputRef.current.value = "";
@@ -43,24 +44,24 @@ export function SearchBar() {
         style={{ paddingLeft: 36, paddingRight: query ? 36 : 12, minHeight: 44, fontSize: 15 }}
       />
       {query && (
-        <button
-          type="button"
+        <a
+          href="#"
+          role="button"
           onClick={handleClear}
+          onTouchEnd={handleClear}
           aria-label="Clear search"
-          className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center justify-center"
+          className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center justify-center no-underline"
           style={{
             width: 24,
             height: 24,
             borderRadius: "50%",
             background: "var(--color-neutral-300)",
             color: "var(--color-neutral-800)",
-            border: "none",
             cursor: "pointer",
-            padding: 0,
           }}
         >
           <X size={14} weight="bold" />
-        </button>
+        </a>
       )}
     </Form>
   );
