@@ -7,11 +7,15 @@ A local streaming content ledger for tracking what's available across your famil
 ## Features
 
 - Browse content across Netflix, Prime Video, Disney+, Max, Apple TV+, Hulu, Paramount+, and Peacock
+- Tracks streaming, rent, and buy availability per service
 - Family profiles with shared watchlist (see who added what)
-- Search by title, genre, director, or service
+- Search by title, genre, director, or logline - with automatic TMDB fallback for titles not yet in the catalog
 - Track new releases and upcoming titles
-- Title details with cast, crew, seasons, and episodes
+- Title details with cast, crew, seasons, episodes, and content ratings (MPAA/TV)
 - Popularity rankings from TMDB
+- Kid-safe hero: the featured title on the home page is always PG-13 or below
+- Optimistic UI: watchlist toggles respond instantly
+- Mobile-responsive layout with two-column grids and dedicated mobile header
 
 ## Setup
 
@@ -35,9 +39,7 @@ Streamsicle pulls its catalog from TMDB in two phases:
 npm run sync:discover
 ```
 
-Fetches every movie and TV show available on your 8 streaming services from TMDB's discover API. Saves all title IDs to `data/discovery.json`. Also auto-resolves the latest TMDB provider IDs and updates `src/lib/constants.ts` if they've changed.
-
-Takes ~8 minutes due to API rate limiting.
+Fetches every movie and TV show available on your 8 streaming services from TMDB's discover API, including titles available for streaming, rent, and purchase. Saves all title IDs to `data/discovery.json`. Also auto-resolves the latest TMDB provider IDs and updates `src/lib/constants.ts` if they've changed.
 
 ### 2. Pull (run anytime)
 
@@ -45,15 +47,21 @@ Takes ~8 minutes due to API rate limiting.
 npm run sync:pull
 ```
 
-Reads the cached discovery and pulls title details, cast, crew, and service availability into the database. Only titles available via subscription streaming are saved - rent/purchase-only titles are skipped. Unchanged titles are detected via sync hash and skipped.
-
-Prints progress every 10 seconds with count, rate, and estimated time remaining.
+Reads the cached discovery and pulls title details, cast, crew, content ratings, and service availability into the database. Each title's availability type (stream, rent, buy) is tracked per service. Unchanged titles are detected via sync hash and skipped. Pulls are resumable - if interrupted, running the command again picks up where it left off.
 
 Use `--limit` for a partial pull:
 
 ```bash
 npm run sync:pull -- --limit 100
 ```
+
+Use `--full` to force a complete re-pull of all titles:
+
+```bash
+npm run sync:pull -- --full
+```
+
+After the initial full pull, subsequent pulls are incremental by default - only titles that have changed on TMDB since the last pull are re-fetched.
 
 ### Status
 
@@ -72,9 +80,13 @@ npm run sync:pull              # After discovery, or anytime to pick up where yo
 
 The app stays fully usable during a pull - new titles appear as they're synced.
 
+## Search
+
+Search queries the local database first. If fewer than 5 results are found, it automatically falls back to TMDB's multi-search API, imports matching titles on the fly, and returns them alongside local results. Imported titles persist in the database for future searches.
+
 ## Stack
 
-- Next.js 15 (App Router) + TypeScript
+- Next.js 16 (App Router) + React 19 + TypeScript
 - PostgreSQL + Prisma
 - Tailwind CSS
 - TMDB API for content data and images
@@ -82,4 +94,4 @@ The app stays fully usable during a pull - new titles appear as they're synced.
 
 ## Version
 
-v0.0.20
+v1.0.20
