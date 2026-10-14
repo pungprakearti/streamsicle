@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import { searchTitles } from "@/lib/queries";
+import { searchWithFallback } from "@/actions/search";
 import { TMDB_IMAGE_BASE } from "@/lib/constants";
 import { formatServices } from "@/lib/format";
 
@@ -16,7 +16,7 @@ function formatDate(d: Date | null) {
 export default async function SearchPage({ searchParams }: Props) {
   const { q } = await searchParams;
   const query = q?.trim() || "";
-  const results = query ? await searchTitles(query) : [];
+  const results = query ? await searchWithFallback(query) : [];
 
   return (
     <>
@@ -26,8 +26,8 @@ export default async function SearchPage({ searchParams }: Props) {
       <p style={{ fontStyle: "italic", fontSize: 18, marginTop: 8 }}>
         {query
           ? results.length > 0
-            ? `${results.length} ${results.length === 1 ? "title" : "titles"}, including upcoming releases`
-            : "No titles match. Try a genre, a director or a service."
+            ? `${results.length} ${results.length === 1 ? "title" : "titles"}`
+            : "No titles found. Try a different search term."
           : "Type a title, genre, director or service above."}
       </p>
 

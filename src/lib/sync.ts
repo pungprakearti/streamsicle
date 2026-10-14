@@ -207,7 +207,7 @@ function resolveServiceLinks(providers: import("@/lib/tmdb").TmdbWatchProviders)
   return links;
 }
 
-async function upsertMovie(tmdbId: number): Promise<"synced" | "skipped" | "no_service"> {
+export async function upsertMovie(tmdbId: number): Promise<"synced" | "skipped" | "no_service"> {
   const [detail, credits, providers, releaseDates] = await Promise.all([
     tmdb.movieDetail(tmdbId),
     tmdb.movieCredits(tmdbId),
@@ -317,7 +317,7 @@ async function upsertMovie(tmdbId: number): Promise<"synced" | "skipped" | "no_s
   return "synced";
 }
 
-async function upsertTvShow(tmdbId: number): Promise<"synced" | "skipped" | "no_service"> {
+export async function upsertTvShow(tmdbId: number): Promise<"synced" | "skipped" | "no_service"> {
   const [detail, credits, providers, contentRatings] = await Promise.all([
     tmdb.tvDetail(tmdbId),
     tmdb.tvCredits(tmdbId),
