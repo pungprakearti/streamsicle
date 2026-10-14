@@ -3,10 +3,11 @@
 import { MagnifyingGlass, X } from "@phosphor-icons/react";
 import Form from "next/form";
 import { useRef, useState, useEffect, useCallback } from "react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 
 export function SearchBar() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const urlQuery = searchParams.get("q") ?? "";
   const inputRef = useRef<HTMLInputElement>(null);
   const [query, setQuery] = useState(urlQuery);
@@ -18,8 +19,8 @@ export function SearchBar() {
   const handleClear = useCallback((e: React.FormEvent) => {
     e.preventDefault();
     setQuery("");
-    inputRef.current?.focus();
-  }, []);
+    router.push("/home");
+  }, [router]);
 
   return (
     <div className="relative" style={{ width: "min(420px, 100%)" }}>
