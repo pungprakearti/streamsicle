@@ -15,8 +15,11 @@ function formatDate(d: Date | null) {
 
 export default async function SearchPage({ searchParams }: Props) {
   const { q } = await searchParams;
-  const query = q?.trim() || "";
-  const results = query ? await searchWithFallback(query) : [];
+  const raw = q?.trim() || "";
+  const { results, flags } = raw
+    ? await searchWithFallback(raw)
+    : { results: [], flags: { live: false } };
+  const query = raw.replace(/(?:^|\s)-live\b/gi, "").trim();
 
   return (
     <>
@@ -26,9 +29,9 @@ export default async function SearchPage({ searchParams }: Props) {
       <p style={{ fontStyle: "italic", fontSize: 18, marginTop: 8 }}>
         {query
           ? results.length > 0
-            ? `${results.length} ${results.length === 1 ? "title" : "titles"}`
-            : "No titles found. Try a different search term."
-          : "Type a title, genre, director or service above."}
+            ? `${results.length} ${results.length === 1 ? "title" : "titles"}${flags.live ? " (live from TMDB)" : ""}`
+            : `No titles found.${flags.live ? "" : " Try adding -live to search TMDB directly."}`
+          : "Type a title, genre, director or service above. Add -live to search TMDB."}
       </p>
 
       {results.length > 0 && (

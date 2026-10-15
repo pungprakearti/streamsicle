@@ -94,4 +94,4 @@ Search queries the local database first. If fewer than 5 results are found, it a
 
 ## Version
 
-v1.0.26
+v1.0.27
