@@ -1,6 +1,6 @@
 {
   "name": "streamsicle",
-  "version": "1.0.27",
+  "version": "1.0.29",
   "private": true,
   "scripts": {
     "dev": "next dev --port 3968 --hostname 0.0.0.0",
@@ -11,6 +11,7 @@
     "sync": "npx tsx --env-file=.env src/scripts/sync-cli.ts",
     "sync:discover": "npx tsx --env-file=.env src/scripts/sync-cli.ts discover",
     "sync:pull": "npx tsx --env-file=.env src/scripts/sync-cli.ts pull",
+    "sync:theaters": "npx tsx --env-file=.env src/scripts/sync-cli.ts theaters",
     "sync:all": "npm run sync:discover && npm run sync:pull",
     "sync:status": "npx tsx --env-file=.env src/scripts/sync-cli.ts status",
     "test:setup": "bash e2e/setup-test-db.sh",

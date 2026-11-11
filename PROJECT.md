@@ -24,11 +24,11 @@ Local-only Next.js streaming ledger. Multi-profile family watchlist app.
 
 ## Current version
 
-v1.0.27
+v1.0.29
 
 ## Status
 
-Mobile-responsive UI complete. Sync discover/pull system working. First full catalog sync in progress (~33k titles across 8 services). GitHub repo: pungprakearti/streamsicle.
+Mobile-responsive UI complete. Sync discover/pull system working. In Theaters section added. First full catalog sync in progress (~33k titles across 8 services). GitHub repo: pungprakearti/streamsicle.
 
 ## Sync commands
 
@@ -36,6 +36,7 @@ Mobile-responsive UI complete. Sync discover/pull system working. First full cat
 npm run sync:discover        # Fetch all title IDs from TMDB (once a day)
 npm run sync:pull            # Pull title data into DB
 npm run sync:pull -- --limit 50  # Pull with limit
+npm run sync:theaters        # Discover + pull movies in theaters
 npm run sync:status          # Show discovery cache info
 ```
 

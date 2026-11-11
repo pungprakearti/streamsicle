@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
-import { Creepster } from "next/font/google";
+import localFont from "next/font/local";
 import "./globals.css";
 
-const creepster = Creepster({
+const creepster = localFont({
+  src: "../fonts/Creepster-Regular.woff2",
   weight: "400",
-  subsets: ["latin"],
   variable: "--font-creepster",
 });
 
